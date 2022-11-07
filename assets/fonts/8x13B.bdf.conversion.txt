@@ -1,0 +1,2 @@
+#
+/usr/src/u8g2/tools/font/bdfconv/bdfconv -v -f 1 -m "32,38,40-63,65-91,93,97-122,176" 8x13B.bdf -n my_u8g2_font_8x13B -o my_u8g2_font_8x13B.hpp

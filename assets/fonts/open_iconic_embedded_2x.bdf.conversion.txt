@@ -1,0 +1,1 @@
+/usr/src/u8g2/tools/font/bdfconv/bdfconv -v -f 1 -m 67 open_iconic_embedded_2x.bdf -n my_u8g2_font_open_iconic_embedded_2x_t -o test.c
