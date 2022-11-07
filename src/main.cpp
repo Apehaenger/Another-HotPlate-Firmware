@@ -1,5 +1,5 @@
 /*
- * This file is part of the Another-Reflow-HotPlate-Firmware project (https://github.com/Apehaenger/Another-Reflow-HotPlate-Firmware).
+ * This file is part of the Another-HotPlate-Firmware project (https://github.com/Apehaenger/Another-HotPlate-Firmware).
  * Copyright (c) 2022 Jörg Ebeling
  *
  * This program is free software: you can redistribute it and/or modify

@@ -32,5 +32,5 @@
 #define LONG_PRESS_TIME_MS 500 // Long-Press if larger
 
 // Internal
-#define VERSION_TEXT "0.4.0b"
+#define VERSION_TEXT "0.4.0"
 #define INTERVAL_DISP 100 // (max) Display refresh rate (if dirty)

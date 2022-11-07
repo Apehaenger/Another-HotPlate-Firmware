@@ -1,5 +1,5 @@
 # Firmware for a DIY Reflow Hot-Plate like "[Tim's Hot Plate](https://www.instructables.com/Tims-Hot-Plate/)"
-![One of my Tim's Hot-Plate](../Tims%20HotPlate%20Mod/assets/images/TimsHotPlate-1.jpg)
+![One of my "Tim's Hot-Plate" builds](assets/images/TimsHotPlate-1.jpg)
 
 A feature-rich reflow Hot-Plate firmware, i.e. usable for "[Tim's Hot Plate](https://www.instructables.com/Tims-Hot-Plate/)"
 
@@ -17,7 +17,7 @@ Not a big deal as it was fairly easiable to compensate this overshooting by choo
 
 However, during the reflow of a coulpe of prototype PCB's, the overshooting workaround started to annoy me, as well as I got a couple of ideas (while rotating the knob and watching/waiting for the target temperature).
 
-As we all have some kind of fetish, and mine is that I tend to over-optimize things others are fine with, I decided trying to build a more feature-rich firmware alternative.
+As we all have some kind of fetish, and mine seem to be that I tend to over-optimize things others are fine with, I decided trying to build a more feature-rich firmware alternative.
 
 ## Features
 
@@ -27,7 +27,7 @@ As we all have some kind of fetish, and mine is that I tend to over-optimize thi
 
 - "Manual" or (open-end) "Reflow-Profile" Mode, with built-in reflow profiles for low-temp. solder paste Sn42/Bi57.6/Ag0.4, as well as high-temp. Sn96.5/Ag3.0/Cu0. After (as well as during) the reflow profile time targets, the user may adapt the target temp. (every 10 seconds). At profile end, the last target temp remain active and the user has to stop the profile manually when everything reflowed correctly.
 
-    ![Reflow Profiles](../Tims%20HotPlate%20Mod/assets/images/ReflowProfiles.jpg)
+    ![Reflow Profiles](assets/images/ReflowProfiles.jpg)
     ![Running Reflow Profile](assets/images/ReflowProfile-1.jpg)
 
 - PID constant settings (within built-in setup)
@@ -76,15 +76,16 @@ Assembled DIY Hot Plate like described in "[Tim's Hot Plate](https://www.instruc
 
 ## Technology
 
-The code is based/compiled via [PlatformIO](https://platformio.org/) environment (no Ardino-IDE test or support).
+The code structure is [PlatformIO/VSCode](https://platformio.org/) based (no Ardino-IDE test or support).
 
 ## Installing
 
-1. Upload .hex or .elf file
+1. Upload .hex or .elf file WITHOUT HAVING AC-MAINS CONNECTED
 2. Long-press (> 0.5s) to get into built-in setup
 3. Choose "SSR Type"
 4. Select your SSR type (Active-Low/High). In the case  of [Tim's Hot Plate](https://www.instructables.com/Tims-Hot-Plate/) it will be "Active-Low"
 5. Choose "Save & Quit"
+6. Plug-in AC-Mains. Happy reflow soldering...
 
 
 ## Usage
@@ -110,7 +111,7 @@ Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of cond
 
 <!-- FIXME -->
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/Apehaenger/Another-HotPlate-Firmware/tags). 
 
 ## Authors
 
