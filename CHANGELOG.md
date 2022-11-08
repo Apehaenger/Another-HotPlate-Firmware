@@ -11,15 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added Changelog
 
+### Changed
+
+- Improved some internal var names
+
 <!-- Further samples:
 
 ### Fixed
 
 - Fixed ...
-
-### Changed
-
-- tbd
 
 ### Removed
 
