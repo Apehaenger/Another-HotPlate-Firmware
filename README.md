@@ -87,13 +87,11 @@ The code structure is [PlatformIO/VSCode](https://platformio.org/) based (no Ard
 5. Choose "Save & Quit"
 6. Plug-in AC-Mains. Happy reflow soldering...
 
-
 ## Usage
 
 - Rotate knob for +/- or up/down
 - Push knob to stop (or start profile if it's displayed on screen)
 - Long-Push (> 0.5s) to get into built-in setup
-
 
 ## Built With
 
@@ -109,9 +107,9 @@ Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of cond
 
 ## Versioning
 
-<!-- FIXME -->
+We use [SemVer](http://semver.org/) for versioning.
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/Apehaenger/Another-HotPlate-Firmware/tags). 
+For the versions available, please see [changelog](CHANGELOG.md) file or the [tags on this repository](https://github.com/Apehaenger/Another-HotPlate-Firmware/tags). 
 
 ## Authors
 

@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BangON and BangOFF values
 - Config storage into EEPROM
 
-[unreleased]: https://github.com/Apehaenger/Another-HotPlate-Firmware/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/Apehaenger/Another-HotPlate-Firmware/compare/v0.4.0...develop
 <!--
 [0.4.x]: https://github.com/Apehaenger/Another-HotPlate-Firmware/compare/v0.4.0...v0.4.x -->
 [0.4.0]: https://github.com/Apehaenger/Another-HotPlate-Firmware/releases/v0.4.0

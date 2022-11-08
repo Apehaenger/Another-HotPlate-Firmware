@@ -25,7 +25,6 @@
  * ----------------------------------------------------------------------
  * 71.9%  1473    91.8% 28186   0.3.0 new Bootloader
  * 71.9%  1473    91.8% 28186   Removed while(true) loop in void loop()
- * 72.1%  1477    92.0% 28266   One day later!?
  * 72.1%  1477    90.7% 27874   Reduced open iconic to used icon
  * 72.1%  1477    86.0% 26432   Reduced 8x13B font
  * 72.1%  1477    85.7% 26328   Reduced fur20 font
@@ -35,12 +34,12 @@
  * 77.5%  1587    86.3% 26518   Moved global ssrOn to Hotplate::_power and added/implemented getter and setter
  * 77.1%  1579    86.0% 26418   Migrated rotary.cpp|hpp into main
  * 77.1%  1579    85.5% 26280   Optimized Thermocouple and removed global mVals
- * 60.8%  1246    78.7% 24170   Without DEBUG_SERIAL
  * 77.1%  1580    85.6% 26296   Moved LED to class
  * 77.4%  1585    85.9% 26398   Fixed shared vars from TC/Hotplate
  * 75.5%  1546    87.0% 26728   Finished reflow profile
  * 75.6%  1548    87.1% 26758   Changed unsigned long to uint32_t and fixed two bugs
  * 62.9%  1289    82.8% 25432   0.4 without DEBUG_SERIAL
+ * 62.7%  1285    82.8% 25428   0.4.0 without DEBUG_SERIAL
  */
 #include <Arduino.h>
 #include "main.hpp"
