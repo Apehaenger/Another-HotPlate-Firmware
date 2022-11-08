@@ -6,11 +6,10 @@ namespace Config
 {
     typedef struct Conf // Default config if read of EEPROM fails, or not set
     {
-        bool disp_unit_c = true;            // °C/F
+        bool disp_unit_c = true; // °C/F
 
-        uint16_t pid_pwm_window_ms = 5000;  // For best autotune results, this should be at least system-temp-delay time long
-        uint16_t pid_sample_ms = 200;       // Should be the shortest PTC-on time, but not shorter than a typical inrush-current period of a PTC (approx. 0.1s)
-        uint16_t pid_max_temp_c = 300;      // Max. PTC/PID temperature (*C)
+        uint16_t pid_pwm_window_ms = 5000; // For best autotune results, this should be at least system-temp-delay time long
+        uint16_t pid_max_temp_c = 300;     // Max. PTC/PID temperature (*C)
 
         /* Kp tuning (with TC cables around plate), BangOn & BangOff = 0:
          * Kp   Ki   Kd  Setpoint °C    Result
@@ -40,10 +39,8 @@ namespace Config
         uint8_t pid_bangOff_temp_c = 5;
 
         Hotplate::Profile profile = Hotplate::Profile::Manual;
-        
-        bool ssr_active_low = true; // SSR = on @ low level = true, or on high level
 
-        unsigned long pid_tuner_interval_ms = 500;
+        bool ssr_active_low = true; // SSR = on @ low level = true, or on high level
     } Conf;
 
     typedef struct EEPConfig // EEPROM Config struct

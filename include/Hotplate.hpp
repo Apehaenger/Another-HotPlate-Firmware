@@ -2,12 +2,16 @@
 #define Hotplate_h
 
 #define PROFILE_TIME_INTERVAL_MS 10000
+#define PID_TUNER_INTERVAL_MS 500 // How often Serial.print values for PID Tuner
 
 #include <AutoPID.h>
 #include "main.hpp"
+#include "Runnable.hpp"
 #include "Thermocouple.hpp"
 
-class Hotplate
+#define PID_SAMPLE_MS 200 // Should be the shortest PTC-on time, but not shorter than a typical inrush-current period of a PTC (approx. 0.1s)
+
+class Hotplate : public Runnable
 {
 public:
     enum State
@@ -38,8 +42,10 @@ public:
         bangOff,
     };
 
-    Hotplate(uint8_t ssr_pin);
-    void compute(float temp);
+    Hotplate(uint32_t interval_ms, uint8_t ssr_pin);
+    void setup();
+    void loop(Thermocouple *);
+
     ControllerState getControllerState();
     uint16_t getOutput();
     short getProfileTimePosition();
@@ -59,8 +65,8 @@ private:
     typedef struct
     {
         ProfileTimeTarget *timeTargets;
-        uint8_t size; // size of timeTargets[]
-        uint16_t duration_s; // Duration (s) of the complete profile (last entry) 
+        uint8_t size;        // size of timeTargets[]
+        uint16_t duration_s; // Duration (s) of the complete profile (last entry)
     } ProfileTimeTargets;
 
     // FIXME: Should be possible directly within mode2timeTargets

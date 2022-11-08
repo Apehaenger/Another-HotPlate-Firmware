@@ -18,16 +18,20 @@
 #include "main.hpp"
 #include "Hotplate.hpp"
 
-Hotplate::Hotplate(uint8_t ssr_pin) : _myPID(&_input, &_setpoint, &_output,
-                                             0, Config::active.pid_pwm_window_ms,
-                                             Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
+Hotplate::Hotplate(uint32_t interval_ms, uint8_t ssr_pin) : Runnable(interval_ms), _myPID(&_input, &_setpoint, &_output,
+                                                                                          0, Config::active.pid_pwm_window_ms,
+                                                                                          Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
 {
     _ssrPin = ssr_pin;
-    pinMode(ssr_pin, OUTPUT);
+}
+
+void Hotplate::setup()
+{
+    pinMode(_ssrPin, OUTPUT);
     setPower(false); // Be sure it's off
 
     _myPID.setBangBang(Config::active.pid_bangOn_temp_c, Config::active.pid_bangOff_temp_c);
-    _myPID.setTimeStep(Config::active.pid_sample_ms); // time interval at which PID calculations are allowed to run in milliseconds
+    _myPID.setTimeStep(PID_SAMPLE_MS); // time interval at which PID calculations are allowed to run in milliseconds
 }
 
 Hotplate::ControllerState Hotplate::getControllerState()
@@ -138,7 +142,7 @@ short Hotplate::getProfileTemp()
         return nextTemp;
     }
     _profileNext_ms = 0; // Stop looping through profile array
-    return 0; // Profile ended
+    return 0;            // Profile ended
 }
 
 void Hotplate::setPower(bool pow)
@@ -164,7 +168,7 @@ void Hotplate::setSetpoint(uint16_t setpoint)
         _controllerState = ControllerState::off;
         _myPID.stop();
         _output = 0;
-        setPower(false); // Don't wait for the next compute()
+        setPower(false); // Don't wait for the next loop()
     }
 }
 
@@ -176,10 +180,10 @@ void Hotplate::updatePidGains()
     _myPID.setGains(Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd);
 }
 
-void Hotplate::compute(float temp)
+void Hotplate::loop(Thermocouple *TcPtr)
 {
     short nextTemp;
-    _input = temp;
+    _input = TcPtr->getTemperature();
 
     switch (_state)
     {
@@ -232,7 +236,7 @@ void Hotplate::compute(float temp)
 #ifdef DEBUG_SERIAL_PIDTUNER
     if (_state == State::On && now >= _pidTunerNext_ms)
     {
-        _pidTunerNext_ms = now + Config::active.pid_tuner_interval_ms;
+        _pidTunerNext_ms = now + PID_TUNER_INTERVAL_MS;
         Serial.print(now);
         Serial.print(", ");
         Serial.print(_power);
