@@ -16,7 +16,7 @@
  */
 #include "Thermocouple.hpp"
 
-Thermocouple::Thermocouple(int8_t pin_CLK, int8_t pin_CS, int8_t pin_DO) : MaxTc(pin_CLK, pin_CS, pin_DO) {}
+Thermocouple::Thermocouple(int8_t pin_CLK, int8_t pin_CS, int8_t pin_DO) : _Tc(pin_CLK, pin_CS, pin_DO) {}
 
 float Thermocouple::getTemperature()
 {
@@ -25,7 +25,7 @@ float Thermocouple::getTemperature()
         return _lastTemp;
     }
     // TODO: Read temperate dependent on EEPROM unit setting (C/F)
-    _lastTemp = MaxTc.readCelsius();
+    _lastTemp = _Tc.readCelsius();
     _lastRead_ms = millis();
 
     return _lastTemp;
