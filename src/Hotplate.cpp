@@ -15,14 +15,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <Arduino.h>
-#include "main.hpp"
 #include "Hotplate.hpp"
+#include "config.hpp"
 
-Hotplate::Hotplate(uint32_t interval_ms, uint8_t ssr_pin) : Runnable(interval_ms), _myPID(&_input, &_setpoint, &_output,
-                                                                                          0, Config::active.pid_pwm_window_ms,
-                                                                                          Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
+Hotplate::Hotplate(uint16_t interval_ms, uint8_t ssr_pin, Thermocouple *TcPtr) : Runnable(interval_ms), _myPID(&_input, &_setpoint, &_output,
+                                                                                                               0, Config::active.pid_pwm_window_ms,
+                                                                                                               Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
 {
     _ssrPin = ssr_pin;
+    _TcPtr = TcPtr;
 }
 
 void Hotplate::setup()
@@ -180,10 +181,10 @@ void Hotplate::updatePidGains()
     _myPID.setGains(Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd);
 }
 
-void Hotplate::loop(Thermocouple *TcPtr)
+void Hotplate::loop()
 {
     short nextTemp;
-    _input = TcPtr->getTemperature();
+    _input = _TcPtr->getTemperature();
 
     switch (_state)
     {

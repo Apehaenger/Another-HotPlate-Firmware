@@ -1,4 +1,5 @@
-#pragma once
+#ifndef config_h
+#define config_h
 
 #include "Hotplate.hpp"
 
@@ -54,3 +55,5 @@ namespace Config
     void load();
     void save();
 }
+
+#endif

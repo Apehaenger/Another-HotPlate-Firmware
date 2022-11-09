@@ -30,14 +30,14 @@ void Runnable::setupAll()
         r->setup();
 }
 
-void Runnable::loopAll(Thermocouple *TcPtr)
+void Runnable::loopAll()
 {
     for (Runnable *r = headRunnable; r; r = r->nextRunnable)
     {
         uint32_t now = millis();
         if (now >= r->_nextInterval_ms)
         {
-            r->loop(TcPtr);
+            r->loop();
             r->_nextInterval_ms = now + r->_interval_ms;
         }
     }

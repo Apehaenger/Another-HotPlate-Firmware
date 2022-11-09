@@ -1,8 +1,5 @@
-#pragma once
-
-#include <Arduino.h>
-#include "config.hpp"
-#include "Hotplate.hpp"
+#ifndef main_h
+#define main_h
 
 //#define DEBUG_SERIAL
 
@@ -32,5 +29,7 @@
 #define LONG_PRESS_TIME_MS 500 // Long-Press if larger
 
 // Internal
-#define VERSION_TEXT "0.4.0"
+#define VERSION_TEXT "0.4.1b"
 #define INTERVAL_DISP 100 // (max) Display refresh rate (if dirty)
+
+#endif

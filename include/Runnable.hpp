@@ -1,7 +1,7 @@
 #ifndef Runnable_h
 #define Runnable_h
 
-#include "Thermocouple.hpp"
+#include <Arduino.h>
 
 /*
  * A "Runnable" super-class
@@ -13,10 +13,10 @@ public:
     Runnable(uint32_t interval_ms);
 
     virtual void setup() = 0;
-    virtual void loop(Thermocouple *) = 0;
+    virtual void loop() = 0;
 
     static void setupAll();
-    static void loopAll(Thermocouple *);
+    static void loopAll();
 
 private:
     static Runnable *headRunnable;

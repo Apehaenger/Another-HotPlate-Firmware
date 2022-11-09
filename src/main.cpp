@@ -44,6 +44,7 @@
  */
 #include <Arduino.h>
 #include "main.hpp"
+#include "config.hpp"
 #include "Thermocouple.hpp"
 #include "Display.hpp"
 #include "Hotplate.hpp"
@@ -59,18 +60,15 @@
 #endif
 
 // Init classes
-Display Disp; // Constructor without parameter need to be initiated without braces. Compiler thingy
 Led HotLed(LED_PIN);
 Thermocouple Tc(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
-Hotplate Hotp(PID_SAMPLE_MS, SSR_Pin);
+Hotplate Hotp(PID_SAMPLE_MS, SSR_Pin, &Tc);
+Display Disp(INTERVAL_DISP, &Tc, &Hotp);
 
 // Internal vars
 volatile byte rotary_aValPrev = 0;             // Rotary A, last level, see ISR(PCINT1_vect)
 volatile byte rotary_sValPrev = 1;             // Rotary S, last level, see ISR(PCINT1_vect)
 volatile unsigned long rotary_sPressed_ms = 0; // volatile, see ISR(PCINT1_vect)
-
-uint32_t lastMillis = millis();
-unsigned long time_disp = 0;
 
 void setup()
 {
@@ -84,8 +82,6 @@ void setup()
   Config::load();
 
   Runnable::setupAll();
-
-  Disp.initialize();
 
   // FIXME JE: Check/Test if the internal pull up would save the external soldered ones
   pinMode(ROTARY_A_PIN, INPUT_PULLUP); // Arduino Analog input 0 (PCINT8), input and set pull up resistor:
@@ -111,29 +107,9 @@ void setup()
 
 void loop()
 {
-  uint32_t currentMillis = millis();
-  if (currentMillis < lastMillis)
-  {
-    // skip main loop in case of millis() overflow
-    lastMillis = currentMillis;
-    time_disp = currentMillis;
-    return;
-  }
-
-  // main event loop actions
-  Runnable::loopAll(&Tc);
-
-  // MyDisplay Interval
-  if (currentMillis >= time_disp + INTERVAL_DISP)
-  {
-    time_disp += INTERVAL_DISP;
-
-    Disp.update(&Tc, &Hotp);
-  }
+  Runnable::loopAll();
 
   HotLed.blinkByTemp(Tc.getTemperature());
-
-  lastMillis = currentMillis;
 }
 
 void onPlusPressed()
