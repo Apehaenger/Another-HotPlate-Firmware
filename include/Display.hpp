@@ -28,7 +28,7 @@ private:
 
     uint16_t _lastTarget;
     bool _lastPower;
-    double _lastTemp;
+    float _lastTemp;
     short _lastProfileTimePosition = 0;
 
     void inputBangValues();
