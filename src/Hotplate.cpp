@@ -18,12 +18,12 @@
 #include "Hotplate.hpp"
 #include "config.hpp"
 
-Hotplate::Hotplate(uint16_t interval_ms, uint8_t ssr_pin, Thermocouple *TcPtr) : Runnable(interval_ms), _myPID(&_input, &_setpoint, &_output,
-                                                                                                               0, Config::active.pid_pwm_window_ms,
-                                                                                                               Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
+Hotplate::Hotplate(uint16_t interval_ms, uint8_t ssr_pin, Thermocouple *TcPtr) : Runnable(interval_ms),
+                                                                                 _ssrPin(ssr_pin), _TcPtr(TcPtr),
+                                                                                 _myPID(&_input, &_setpoint, &_output,
+                                                                                        0, Config::active.pid_pwm_window_ms,
+                                                                                        Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
 {
-    _ssrPin = ssr_pin;
-    _TcPtr = TcPtr;
 }
 
 void Hotplate::setup()

@@ -40,7 +40,7 @@
  * 75.6%  1548    87.1% 26758   Changed unsigned long to uint32_t and fixed two bugs
  * 62.9%  1289    82.8% 25432   0.4 without DEBUG_SERIAL
  * 62.7%  1285    82.8% 25428   0.4.0 without DEBUG_SERIAL
- * 63.4%  1299    83.0% 25490   First runnable implementation
+ * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
  */
 #include <Arduino.h>
 #include "main.hpp"
@@ -60,6 +60,7 @@
 #endif
 
 // Init classes
+Runnable *Runnable::headRunnable = NULL;  // Runnable super-class 
 Led HotLed(LED_PIN);
 Thermocouple Tc(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
 Hotplate Hotp(PID_SAMPLE_MS, SSR_Pin, &Tc);
@@ -108,7 +109,6 @@ void setup()
 void loop()
 {
   Runnable::loopAll();
-
   HotLed.blinkByTemp(Tc.getTemperature());
 }
 

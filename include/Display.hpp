@@ -7,6 +7,9 @@
 
 class Display : public Runnable
 {
+    Thermocouple *_TcPtr;
+    Hotplate *_HotPtr;
+
 public:
     enum uiMode
     {
@@ -15,14 +18,12 @@ public:
     };
 
     Display(uint16_t interval_ms, Thermocouple *TcPtr, Hotplate *HotPtr);
-    void setup();
-    void loop();
+    void setup() override;
+    void loop() override;
     void changeUiMode(uiMode nextUi);
 
 private:
     U8G2_SSD1306_128X64_NONAME_1_HW_I2C u8g2;
-    Thermocouple *_TcPtr;
-    Hotplate *_HotPtr;
     uiMode uiM = uiMode::Main;
 
     uint16_t _lastTarget;

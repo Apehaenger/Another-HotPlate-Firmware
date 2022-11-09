@@ -28,10 +28,11 @@
  *   48 pixel i.e. blue
  */
 
-Display::Display(uint16_t interval_ms, Thermocouple *TcPtr, Hotplate *HotPtr) : Runnable(interval_ms), u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE)
+Display::Display(uint16_t interval_ms, Thermocouple *TcPtr, Hotplate *HotPtr) : Runnable(interval_ms),
+                                                                                _TcPtr(TcPtr),
+                                                                                _HotPtr(HotPtr),
+                                                                                u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE)
 {
-    _TcPtr = TcPtr;
-    _HotPtr = HotPtr;
 }
 
 void Display::setup()

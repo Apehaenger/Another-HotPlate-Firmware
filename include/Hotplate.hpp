@@ -12,6 +12,9 @@
 
 class Hotplate : public Runnable
 {
+    const uint8_t _ssrPin;
+    Thermocouple *_TcPtr;
+
 public:
     enum State
     {
@@ -42,8 +45,8 @@ public:
     };
 
     Hotplate(uint16_t interval_ms, uint8_t ssr_pin, Thermocouple *TcPtr);
-    void setup();
-    void loop();
+    void setup() override;
+    void loop() override;
 
     ControllerState getControllerState();
     uint16_t getOutput();
@@ -82,13 +85,11 @@ private:
     };
 
     AutoPID _myPID;
-    Thermocouple *_TcPtr;
     State _state = State::Off;
     double _input = 0, _setpoint = 0, _output = 0;
     uint32_t _pwmWindowStart_ms, _profileStart_ms, _profileNext_ms = 0, _pidTunerNext_ms = 0;
     ControllerState _controllerState = ControllerState::off;
     bool _power = false;
-    uint8_t _ssrPin;
 
     short getProfileTemp();
     void setPower(bool);
