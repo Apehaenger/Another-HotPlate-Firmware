@@ -20,13 +20,13 @@ Thermocouple::Thermocouple(int8_t pin_CLK, int8_t pin_CS, int8_t pin_DO) : _Tc(p
 
 float Thermocouple::getTemperature()
 {
-    if ((millis() - _lastRead_ms) < TC_MAX_READ_INTERVAL_MS)
+    if ((millis() < _nextRead_ms))
     {
         return _lastTemp;
     }
     // TODO: Read temperate dependent on EEPROM unit setting (C/F)
     _lastTemp = _Tc.readCelsius();
-    _lastRead_ms = millis();
+    _nextRead_ms = millis() + TC_MAX_READ_INTERVAL_MS;
 
     return _lastTemp;
 }

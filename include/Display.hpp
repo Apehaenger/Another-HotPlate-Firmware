@@ -3,11 +3,13 @@
 
 #include <Arduino.h>
 #include <U8g2lib.h>
-#include "main.hpp"
 #include "Hotplate.hpp"
 
-class Display
+class Display : public Runnable
 {
+    Thermocouple *_TcPtr;
+    Hotplate *_HotPtr;
+
 public:
     enum uiMode
     {
@@ -15,9 +17,9 @@ public:
         Setup
     };
 
-    Display();
-    void initialize();
-    void update(Thermocouple *, Hotplate *);
+    Display(uint16_t interval_ms, Thermocouple *TcPtr, Hotplate *HotPtr);
+    void setup() override;
+    void loop() override;
     void changeUiMode(uiMode nextUi);
 
 private:
@@ -26,16 +28,16 @@ private:
 
     uint16_t _lastTarget;
     bool _lastPower;
-    double _lastTemp;
+    float _lastTemp;
     short _lastProfileTimePosition = 0;
 
     void inputBangValues();
     void inputPidConstants();
-    void inputReflowProfile(Hotplate *);
+    void inputReflowProfile();
     void inputSsrType();
-    void mainScreen(Thermocouple *, Hotplate *);
+    void mainScreen();
     void setStdFont();
-    void setupScreen(Hotplate *);
+    void setupScreen();
     void userInterfaceInputValue(const char *title, const char *pre, uint8_t *value, uint8_t lo, uint8_t hi, uint8_t digits, const char *post);
     void userInterfaceInputDouble(const char *title, const char *pre, double *value, uint8_t numInt, uint8_t numDec, const char *post);
     u8g2_uint_t drawUTF8Lines(u8g2_uint_t x, u8g2_uint_t y, u8g2_uint_t w, u8g2_uint_t line_height, const char *s);

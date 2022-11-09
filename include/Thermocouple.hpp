@@ -9,14 +9,15 @@
  * Simple Thermocouple wrapper around MAX6675
  * Later, we might to implement a bridge pattern
  */
-class Thermocouple {
+class Thermocouple
+{
 public:
     Thermocouple(int8_t pin_CLK, int8_t pin_CS, int8_t pin_DO);
     float getTemperature();
 
 private:
     MAX6675 _Tc;
-    unsigned long _lastRead_ms = 0;
+    unsigned long _nextRead_ms = 0;
     float _lastTemp;
 };
 

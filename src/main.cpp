@@ -40,9 +40,11 @@
  * 75.6%  1548    87.1% 26758   Changed unsigned long to uint32_t and fixed two bugs
  * 62.9%  1289    82.8% 25432   0.4 without DEBUG_SERIAL
  * 62.7%  1285    82.8% 25428   0.4.0 without DEBUG_SERIAL
+ * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
  */
 #include <Arduino.h>
 #include "main.hpp"
+#include "config.hpp"
 #include "Thermocouple.hpp"
 #include "Display.hpp"
 #include "Hotplate.hpp"
@@ -58,19 +60,16 @@
 #endif
 
 // Init classes
-Display Disp; // Constructor without parameter need to be initiated without braces. Compiler thingy
+Runnable *Runnable::headRunnable = NULL;  // Runnable super-class 
 Led HotLed(LED_PIN);
 Thermocouple Tc(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
-Hotplate Hotp(SSR_Pin);
+Hotplate Hotp(PID_SAMPLE_MS, SSR_Pin, &Tc);
+Display Disp(INTERVAL_DISP, &Tc, &Hotp);
 
 // Internal vars
 volatile byte rotary_aValPrev = 0;             // Rotary A, last level, see ISR(PCINT1_vect)
 volatile byte rotary_sValPrev = 1;             // Rotary S, last level, see ISR(PCINT1_vect)
 volatile unsigned long rotary_sPressed_ms = 0; // volatile, see ISR(PCINT1_vect)
-
-uint32_t lastMillis = millis();
-unsigned long time_disp = 0;
-unsigned long time_ptc = 0;
 
 void setup()
 {
@@ -83,7 +82,7 @@ void setup()
 #endif
   Config::load();
 
-  Disp.initialize();
+  Runnable::setupAll();
 
   // FIXME JE: Check/Test if the internal pull up would save the external soldered ones
   pinMode(ROTARY_A_PIN, INPUT_PULLUP); // Arduino Analog input 0 (PCINT8), input and set pull up resistor:
@@ -109,38 +108,8 @@ void setup()
 
 void loop()
 {
-  uint32_t currentMillis = millis();
-  if (currentMillis < lastMillis)
-  {
-    // skip main loop in case of millis() overflow
-    lastMillis = currentMillis;
-    time_disp = currentMillis;
-    time_ptc = currentMillis;
-    return;
-  }
-
-  // main event loop actions
-
-  // PTC (minimum PWM) Interval
-  // Use PID sample time to ensure that smaller PID output values do NOT trigger a shorter SSR-ON pules
-  // (Typical inrush-current of a PTC is about 0.1s)
-  if (currentMillis >= time_ptc + Config::active.pid_sample_ms)
-  {
-    time_ptc += Config::active.pid_sample_ms;
-    Hotp.compute(Tc.getTemperature());
-  }
-
-  // MyDisplay Interval
-  if (currentMillis >= time_disp + INTERVAL_DISP)
-  {
-    time_disp += INTERVAL_DISP;
-
-    Disp.update(&Tc, &Hotp);
-  }
-
+  Runnable::loopAll();
   HotLed.blinkByTemp(Tc.getTemperature());
-
-  lastMillis = currentMillis;
 }
 
 void onPlusPressed()

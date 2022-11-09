@@ -2,13 +2,19 @@
 #define Hotplate_h
 
 #define PROFILE_TIME_INTERVAL_MS 10000
+#define PID_TUNER_INTERVAL_MS 500 // How often Serial.print values for PID Tuner
 
 #include <AutoPID.h>
-#include "main.hpp"
+#include "Runnable.hpp"
 #include "Thermocouple.hpp"
 
-class Hotplate
+#define PID_SAMPLE_MS 200 // Should be the shortest PTC-on time, but not shorter than a typical inrush-current period of a PTC (approx. 0.1s)
+
+class Hotplate : public Runnable
 {
+    const uint8_t _ssrPin;
+    Thermocouple *_TcPtr;
+
 public:
     enum State
     {
@@ -38,8 +44,10 @@ public:
         bangOff,
     };
 
-    Hotplate(uint8_t ssr_pin);
-    void compute(float temp);
+    Hotplate(uint16_t interval_ms, uint8_t ssr_pin, Thermocouple *TcPtr);
+    void setup() override;
+    void loop() override;
+
     ControllerState getControllerState();
     uint16_t getOutput();
     short getProfileTimePosition();
@@ -59,8 +67,8 @@ private:
     typedef struct
     {
         ProfileTimeTarget *timeTargets;
-        uint8_t size; // size of timeTargets[]
-        uint16_t duration_s; // Duration (s) of the complete profile (last entry) 
+        uint8_t size;        // size of timeTargets[]
+        uint16_t duration_s; // Duration (s) of the complete profile (last entry)
     } ProfileTimeTargets;
 
     // FIXME: Should be possible directly within mode2timeTargets
@@ -82,7 +90,6 @@ private:
     uint32_t _pwmWindowStart_ms, _profileStart_ms, _profileNext_ms = 0, _pidTunerNext_ms = 0;
     ControllerState _controllerState = ControllerState::off;
     bool _power = false;
-    uint8_t _ssrPin;
 
     short getProfileTemp();
     void setPower(bool);
