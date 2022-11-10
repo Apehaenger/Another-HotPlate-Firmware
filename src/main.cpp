@@ -41,6 +41,7 @@
  * 62.9%  1289    82.8% 25432   0.4 without DEBUG_SERIAL
  * 62.7%  1285    82.8% 25428   0.4.0 without DEBUG_SERIAL
  * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
+ * 64.4%  1319    86.7% 26632   Temp average
  */
 #include <Arduino.h>
 #include "main.hpp"
@@ -109,7 +110,7 @@ void setup()
 void loop()
 {
   Runnable::loopAll();
-  HotLed.blinkByTemp(Tc.getTemperature());
+  HotLed.blinkByTemp(Tc.getTemperatureAverage());
 }
 
 void onPlusPressed()

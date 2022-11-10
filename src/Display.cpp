@@ -44,7 +44,7 @@ void Display::setup()
 void Display::mainScreen()
 {
     // Check if we need to make the expensive display redraw
-    if (_TcPtr->getTemperature() == _lastTemp &&
+    if (_TcPtr->getTemperatureAverage() == _lastTemp &&
         _HotPtr->getSetpoint() == _lastTarget &&
         _HotPtr->getPower() == _lastPower &&
         _HotPtr->getProfileTimePosition() == _lastProfileTimePosition)
@@ -120,11 +120,11 @@ void Display::mainScreen()
         u8g2.setFont(my_u8g2_font_fur20);
 
         // Temperature
-        dtostrf(_TcPtr->getTemperature(), 5, 1, cbuf);
+        dtostrf(_TcPtr->getTemperatureAverage(), 5, 1, cbuf);
         s = String(cbuf);
         s.concat(" °C");
         u8g2.drawUTF8(35, 64, s.c_str());
-        _lastTemp = _TcPtr->getTemperature();
+        _lastTemp = _TcPtr->getTemperatureAverage();
 
         // SSR Power
         _lastPower = _HotPtr->getPower();
