@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemeted "Runnable" super-class
 - Optimized Thermocouple class and implemented average temperature
 - Changed from "pass by pointer" to "pass by reference"
+- Moved profile handling into a separate class
+- Resturctured handling of objects via globals (instead of space wasting pointer/reference parameter)
 
 <!-- Further samples:
 

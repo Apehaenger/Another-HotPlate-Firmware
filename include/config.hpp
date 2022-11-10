@@ -1,7 +1,7 @@
 #ifndef config_h
 #define config_h
 
-#include "Hotplate.hpp"
+#include "Profile.hpp"
 
 namespace Config
 {
@@ -39,7 +39,7 @@ namespace Config
         uint8_t pid_bangOn_temp_c = 40;
         uint8_t pid_bangOff_temp_c = 5;
 
-        Hotplate::Profile profile = Hotplate::Profile::Manual;
+        Profile::Profiles profile = Profile::Profiles::Manual;
 
         bool ssr_active_low = true; // SSR = on @ low level = true, or on high level
     } Conf;

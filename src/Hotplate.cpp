@@ -15,14 +15,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <Arduino.h>
-#include "Hotplate.hpp"
+#include "main.hpp"
 #include "config.hpp"
 
-Hotplate::Hotplate(uint16_t interval_ms, uint8_t ssr_pin, Thermocouple &TcRef) : Runnable(interval_ms),
-                                                                                       _ssrPin(ssr_pin), _TcRef(TcRef),
-                                                                                       _myPID(&_input, &_setpoint, &_output,
-                                                                                              0, Config::active.pid_pwm_window_ms,
-                                                                                              Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
+Hotplate::Hotplate(uint16_t interval_ms, uint8_t ssr_pin) : Runnable(interval_ms),
+                                                            _ssrPin(ssr_pin),
+                                                            _myPID(&_input, &_setpoint, &_output,
+                                                                   0, Config::active.pid_pwm_window_ms,
+                                                                   Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
 {
 }
 
@@ -53,97 +53,6 @@ bool Hotplate::getPower()
 uint16_t Hotplate::getSetpoint()
 {
     return _setpoint;
-}
-
-void Hotplate::runProfile()
-{
-    _state = State::On;
-    _profileStart_ms = millis();
-    _profileNext_ms = _profileStart_ms;
-}
-
-short Hotplate::getProfileTimePosition()
-{
-    // In-line math in C sucks!
-    long timePosMs = millis() - _profileStart_ms - (1000UL * _profile2timeTargets[Config::active.profile]->duration_s);
-    short timePosS = round(0.001 * timePosMs);
-#ifdef DEBUG_SERIAL_PROTIMPOS
-    Serial.print("millis(): ");
-    Serial.print(millis());
-    Serial.print(", profile start(ms): ");
-    Serial.print(_profileStart_ms);
-    Serial.print(", profile duration(s): ");
-    Serial.print(_profile2timeTargets[Config::active.profile]->duration_s);
-    Serial.print(", timePosMs: ");
-    Serial.print(timePosMs);
-    Serial.println(", timePosS: ");
-#endif
-    return timePosS;
-}
-
-/*
- * Get profile time/temp target dependent of current time/temp
- * @return -1 in the case where PROFILE_TIME_INTERVAL is not reached or profile ended
- */
-short Hotplate::getProfileTemp()
-{
-    uint32_t now = millis();
-    short nextTemp;
-
-    if (_profileNext_ms && now < _profileNext_ms)
-    {
-        return -1;
-    }
-    _profileNext_ms += PROFILE_TIME_INTERVAL_MS;
-
-    ProfileTimeTarget timeTarget;
-
-    for (uint8_t i = 0; i < _profile2timeTargets[Config::active.profile]->length; i++)
-    {
-        timeTarget = _profile2timeTargets[Config::active.profile]->timeTargets[i]; // Make code more readable
-
-#ifdef DEBUG_SERIAL_PROTEM
-        Serial.print("Profile: ");
-        Serial.print(Config::active.profile);
-        Serial.print(" = ");
-        Serial.print(Hotplate::profile2str[Config::active.profile]);
-        Serial.print(": time_s = ");
-        Serial.print(timeTarget.time_s);
-        Serial.print(", temp_c = ");
-        Serial.println(timeTarget.temp_c);
-#endif
-        if ((now - _profileStart_ms) > (1000UL * timeTarget.time_s) ||
-            _input > timeTarget.temp_c) // FIXME: This would result in a wrong profile time left display if already hot
-        {
-            continue; // Already beyond this time or temp target
-        }
-
-        // In-line math in C sucks :-/
-        float tempDiff = timeTarget.temp_c - _input;
-        float timeLeft_ms = (1000.0 * timeTarget.time_s) + _profileStart_ms - now;
-        float intervalsProfile = (1000.0 * timeTarget.time_s) / PROFILE_TIME_INTERVAL_MS;
-        float intervalsLeft = (timeLeft_ms / PROFILE_TIME_INTERVAL_MS) - 1;
-
-        nextTemp = _input + round(tempDiff / intervalsProfile * (intervalsProfile - intervalsLeft));
-
-#ifdef DEBUG_SERIAL_PROTEM
-        Serial.print("TimeTarget = ");
-        Serial.print(i);
-        Serial.print(": tempDiff = ");
-        Serial.print(tempDiff);
-        Serial.print(", timeLeft(ms) = ");
-        Serial.print(timeLeft_ms);
-        Serial.print(", intervals = ");
-        Serial.print(intervalsProfile);
-        Serial.print(", intervalsLeft = ");
-        Serial.print(intervalsLeft);
-        Serial.print(", new Setpoint = ");
-        Serial.println(nextTemp);
-#endif
-        return nextTemp;
-    }
-    _profileNext_ms = 0; // Stop looping through profile array
-    return 0;            // Profile ended
 }
 
 void Hotplate::setPower(bool pow)
@@ -183,8 +92,7 @@ void Hotplate::updatePidGains()
 
 void Hotplate::loop()
 {
-    short nextTemp;
-    _input = _TcRef.getTemperatureAverage();
+    _input = thermocouple.getTemperatureAverage();
 
     switch (_state)
     {
@@ -193,14 +101,6 @@ void Hotplate::loop()
         return;
         ;
     case State::On:
-        if (Config::active.profile != Hotplate::Profile::Manual)
-        {
-            nextTemp = getProfileTemp();
-            if (nextTemp > 0) // Allow manual correction per interval, and do not stop at end
-            {
-                setSetpoint(nextTemp);
-            }
-        }
         _myPID.run();
         break;
     }
