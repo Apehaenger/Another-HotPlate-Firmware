@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Improved some internal var names
 - Implemeted "Runnable" super-class
+- Optimized Thermocouple class and implemented average temperature
 
 <!-- Further samples:
 

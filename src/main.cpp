@@ -41,7 +41,8 @@
  * 62.9%  1289    82.8% 25432   0.4 without DEBUG_SERIAL
  * 62.7%  1285    82.8% 25428   0.4.0 without DEBUG_SERIAL
  * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
- * 73.0%  1496    89.5% 27480   Added/activated Serial for PID Tuner. It's going to become narrow... 
+ * 64.4%  1319    86.7% 26632   Temp average
+ * 73.0%  1496    89.5% 27480   Added/activated Serial for PID Tuner. It's going to become narrow...
  */
 #include <Arduino.h>
 #include "main.hpp"
@@ -111,7 +112,7 @@ void setup()
 void loop()
 {
   Runnable::loopAll();
-  HotLed.blinkByTemp(Tc.getTemperature());
+  HotLed.blinkByTemp(Tc.getTemperatureAverage());
 }
 
 void onPlusPressed()

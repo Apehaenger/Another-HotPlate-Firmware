@@ -16,17 +16,33 @@
  */
 #include "Thermocouple.hpp"
 
-Thermocouple::Thermocouple(int8_t pin_CLK, int8_t pin_CS, int8_t pin_DO) : _Tc(pin_CLK, pin_CS, pin_DO) {}
+Thermocouple::Thermocouple(const int8_t pin_CLK, const int8_t pin_CS, const int8_t pin_DO) : _Tc(pin_CLK, pin_CS, pin_DO) {}
 
-float Thermocouple::getTemperature()
+void Thermocouple::readTemperature()
 {
     if ((millis() < _nextRead_ms))
     {
-        return _lastTemp;
+        return;
     }
-    // TODO: Read temperate dependent on EEPROM unit setting (C/F)
-    _lastTemp = _Tc.readCelsius();
     _nextRead_ms = millis() + TC_MAX_READ_INTERVAL_MS;
 
+    // TODO: Read temperate dependent on EEPROM unit setting (C/F)
+    _lastTemp = _Tc.readCelsius();
+
+    // Cumulative (rolling) average temperature of the last TC_AVG_SAMPLES
+    // See https://en.wikipedia.org/wiki/Moving_average#Cumulative_average
+    _avgTemp -= _avgTemp / TC_AVG_SAMPLES;
+    _avgTemp += _lastTemp / TC_AVG_SAMPLES;
+}
+
+float Thermocouple::getTemperature()
+{
+    readTemperature();
     return _lastTemp;
+}
+
+float Thermocouple::getTemperatureAverage()
+{
+    readTemperature();
+    return _avgTemp;
 }

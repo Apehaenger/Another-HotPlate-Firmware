@@ -184,7 +184,7 @@ void Hotplate::updatePidGains()
 void Hotplate::loop()
 {
     short nextTemp;
-    _input = _TcPtr->getTemperature();
+    _input = _TcPtr->getTemperatureAverage();
 
     switch (_state)
     {
