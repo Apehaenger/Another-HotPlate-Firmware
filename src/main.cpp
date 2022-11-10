@@ -42,6 +42,7 @@
  * 62.7%  1285    82.8% 25428   0.4.0 without DEBUG_SERIAL
  * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
  * 64.4%  1319    86.7% 26632   Temp average
+ * 63.3%  1297    86.4% 26544   Optimized Hotplate
  */
 #include <Arduino.h>
 #include "main.hpp"
