@@ -98,7 +98,7 @@ short Hotplate::getProfileTemp()
 
     ProfileTimeTarget timeTarget;
 
-    for (uint8_t i = 0; i < _profile2timeTargets[Config::active.profile]->size; i++)
+    for (uint8_t i = 0; i < _profile2timeTargets[Config::active.profile]->length; i++)
     {
         timeTarget = _profile2timeTargets[Config::active.profile]->timeTargets[i]; // Make code more readable
 

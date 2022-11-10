@@ -66,19 +66,15 @@ private:
 
     typedef struct
     {
+        uint8_t length; // length of (the next) timeTargets[]
         ProfileTimeTarget *timeTargets;
-        uint8_t size;        // size of timeTargets[]
         uint16_t duration_s; // Duration (s) of the complete profile (last entry)
     } ProfileTimeTargets;
 
-    // FIXME: Should be possible directly within mode2timeTargets
-    ProfileTimeTarget _profileTimeTargets_Sn42Bi576Ag04[4] = {{90, 90}, {180, 130}, {210, 138}, {240, 165}};
-    ProfileTimeTargets _profileTimeTarget_Sn42Bi576Ag04 = {_profileTimeTargets_Sn42Bi576Ag04, sizeof(_profileTimeTargets_Sn42Bi576Ag04) / sizeof(ProfileTimeTarget), 240};
-    //
-    ProfileTimeTarget _profileTimeTargets_tSn965Ag30Cu05[4] = {{90, 150}, {180, 175}, {210, 217}, {240, 249}};
-    ProfileTimeTargets _profileTimeTarget_tSn965Ag30Cu05 = {_profileTimeTargets_tSn965Ag30Cu05, sizeof(_profileTimeTargets_tSn965Ag30Cu05) / sizeof(ProfileTimeTarget), 240};
-
-    ProfileTimeTargets *_profile2timeTargets[3] = {
+    // FIXME: Should be possible directly within _profile2timeTargets
+    const ProfileTimeTargets _profileTimeTarget_Sn42Bi576Ag04 = {4, (ProfileTimeTarget[]){{90, 90}, {180, 130}, {210, 138}, {240, 165}}, 240};
+    const ProfileTimeTargets _profileTimeTarget_tSn965Ag30Cu05 = {4, (ProfileTimeTarget[]){{90, 150}, {180, 175}, {210, 217}, {240, 249}}, 240};
+    ProfileTimeTargets const *_profile2timeTargets[3] = {
         [Manual] = nullptr,
         [Sn42Bi576Ag04] = &_profileTimeTarget_Sn42Bi576Ag04,
         [Sn965Ag30Cu05] = &_profileTimeTarget_tSn965Ag30Cu05,
@@ -86,8 +82,8 @@ private:
 
     AutoPID _myPID;
     State _state = State::Off;
-    double _input = 0, _setpoint = 0, _output = 0;
-    uint32_t _pwmWindowStart_ms, _profileStart_ms, _profileNext_ms = 0, _pidTunerNext_ms = 0;
+    double _input, _setpoint = 0, _output = 0;
+    uint32_t _pwmWindowStart_ms, _profileStart_ms, _profileNext_ms, _pidTunerNext_ms = 0;
     ControllerState _controllerState = ControllerState::off;
     bool _power = false;
 
