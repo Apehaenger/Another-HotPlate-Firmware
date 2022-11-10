@@ -44,7 +44,7 @@
  * 64.4%  1319    86.7% 26632   Temp average
  * 63.3%  1297    86.4% 26544   Optimized Hotplate
  * 63.9%  1309    86.2% 26482   Separated profile handling into separate class and switched to global class pointer
- * 73.0%  1496    89.5% 27480   Added/activated Serial for PID Tuner. It's going to become narrow...
+ * 72.8%  1490    89.5% 27492   Added/activated Serial for PID Tuner. It's going to become narrow...
  */
 #include <Arduino.h>
 #include "main.hpp"
@@ -115,10 +115,22 @@ void loop()
   hotLed.blinkByTemp(thermocouple.getTemperatureAverage());
 }
 
+bool isProfileStart()
+{
+  if (Config::active.profile != Profile::Profiles::Manual &&
+      hotplate.getControllerState() == Hotplate::ControllerState::Off)
+  {
+    profile.startProfile();
+    return true;
+  }
+  return false;
+}
+
 void onPlusPressed()
 {
   if (hotplate.getSetpoint() < Config::active.pid_max_temp_c)
   {
+    isProfileStart();
     hotplate.setSetpoint(hotplate.getSetpoint() + 1);
   }
 }
@@ -127,18 +139,14 @@ void onMinusPressed()
 {
   if (hotplate.getSetpoint())
   {
+    isProfileStart();
     hotplate.setSetpoint(hotplate.getSetpoint() - 1);
   }
 }
 
 void onPushPressed()
 {
-  if (Config::active.profile != Profile::Profiles::Manual &&
-      hotplate.getControllerState() == Hotplate::ControllerState::off)
-  {
-    profile.startProfile();
-  }
-  else
+  if (!isProfileStart())
   {
     profile.stopProfile();
     hotplate.setSetpoint(0);

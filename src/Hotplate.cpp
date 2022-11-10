@@ -40,6 +40,11 @@ Hotplate::ControllerState Hotplate::getControllerState()
     return _controllerState;
 }
 
+void Hotplate::setControllerState(ControllerState state)
+{
+    _controllerState = state;
+}
+
 uint16_t Hotplate::getOutput()
 {
     return _output;
@@ -65,21 +70,23 @@ void Hotplate::setSetpoint(uint16_t setpoint)
 {
     _setpoint = setpoint;
 
-    if (_setpoint)
+    if (!_setpoint)
     {
-        //_myPID.stop();
-        _myPID.run();
-        _state = State::On;
-        _pwmWindowStart_ms = millis();
-    }
-    else
-    {
-        _state = State::Off;
-        _controllerState = ControllerState::off;
+        //_mode = Mode::Off;
+        _controllerState = ControllerState::Off;
         _myPID.stop();
         _output = 0;
         setPower(false); // Don't wait for the next loop()
+        return;
     }
+
+    if (_controllerState == ControllerState::Off)
+    {
+        _controllerState = ControllerState::PID;
+    }
+    _myPID.run();
+    //_mode = Mode::On;
+    _pwmWindowStart_ms = millis();
 }
 
 /**
@@ -94,24 +101,26 @@ void Hotplate::loop()
 {
     _input = thermocouple.getTemperatureAverage();
 
-    switch (_state)
+    switch (_controllerState)
     {
-    case State::Off:
+    case ControllerState::Off:
         setPower(false);
         return;
-        ;
-    case State::On:
+    case ControllerState::PID:
+    case ControllerState::BangOn:
+    case ControllerState::BangOff:
         _myPID.run();
+        // Informative state changes. Logic copied from AutoPID.cpp
+        if (Config::active.pid_bangOn_temp_c && ((_setpoint - _input) > Config::active.pid_bangOn_temp_c))
+            _controllerState = ControllerState::BangOn;
+        else if (Config::active.pid_bangOff_temp_c && ((_input - _setpoint) > Config::active.pid_bangOff_temp_c))
+            _controllerState = ControllerState::BangOff;
+        else
+            _controllerState = ControllerState::PID;
+        break;
+    case ControllerState::PIDTuner:
         break;
     }
-
-    // Informative state changes. Logic copied from AutoPID.cpp
-    if (Config::active.pid_bangOn_temp_c && ((_setpoint - _input) > Config::active.pid_bangOn_temp_c))
-        _controllerState = ControllerState::bangOn;
-    else if (Config::active.pid_bangOff_temp_c && ((_input - _setpoint) > Config::active.pid_bangOff_temp_c))
-        _controllerState = ControllerState::bangOff;
-    else
-        _controllerState = ControllerState::pid;
 
     // Soft PWM
     uint32_t now = millis();
@@ -134,15 +143,13 @@ void Hotplate::loop()
     Serial.println(_power);
 #endif
 
-#ifdef DEBUG_SERIAL_PIDTUNER
-    if (_state == State::On && now >= _pidTunerNext_ms)
+    if (_controllerState == ControllerState::PIDTuner && now >= _pidTunerOutputNext_ms)
     {
-        _pidTunerNext_ms = now + PID_TUNER_INTERVAL_MS;
-        Serial.print(now);
+        _pidTunerOutputNext_ms = now + PID_TUNER_INTERVAL_MS;
+        Serial.print((float)now / 1000);
         Serial.print(", ");
         Serial.print(_power);
         Serial.print(", ");
         Serial.println(_input);
     }
-#endif
 }

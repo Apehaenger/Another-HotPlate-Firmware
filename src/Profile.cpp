@@ -29,7 +29,11 @@ void Profile::setup() {}
 
 void Profile::startProfile()
 {
-    _profileStart_ms = millis();
+    if(!_profileStart_ms)
+    {
+        _profileStart_ms = millis();
+        _nextInterval_ms = 0;
+    }
 }
 
 void Profile::stopProfile()

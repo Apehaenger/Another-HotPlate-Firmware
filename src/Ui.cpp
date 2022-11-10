@@ -44,7 +44,8 @@ void Ui::mainScreen()
     if (thermocouple.getTemperatureAverage() == _lastTemp &&
         hotplate.getSetpoint() == _lastTarget &&
         hotplate.getPower() == _lastPower &&
-        profile.getSecondsLeft() == _lastProfileSecondLeft)
+        profile.getSecondsLeft() == _lastProfileSecondLeft &&
+        hotplate.getControllerState() == _lastControllerState)
     {
         return;
     }
@@ -59,13 +60,23 @@ void Ui::mainScreen()
         // Standard (small font)
         setStdFont();
 
+        // 1st row
+        y = 13;
         // Profile / Mode
-        u8g2.drawStr(0, 13, profile.profile2str[Config::active.profile]);
+        if (hotplate.getControllerState() == Hotplate::ControllerState::PIDTuner)
+        {
+            u8g2.drawStr(0, y, "PID Tuner");
+        }
+        else
+        {
+            u8g2.drawStr(0, y, profile.profile2str[Config::active.profile]);
+        }
 
         // 2nd row
         y = 27;
         if (Config::active.profile != Profile::Profiles::Manual &&
-            hotplate.getControllerState() == Hotplate::ControllerState::off)
+            (hotplate.getControllerState() == Hotplate::ControllerState::Off ||
+            hotplate.getControllerState() == Hotplate::ControllerState::PIDTuner))
         {
             s = "Push to start";
             u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(s.c_str())) / 2, y, s.c_str());
@@ -87,7 +98,7 @@ void Ui::mainScreen()
         // Controller state
         switch (hotplate.getControllerState())
         {
-        case Hotplate::ControllerState::bangOn:
+        case Hotplate::ControllerState::BangOn:
             s = "BangON";
             u8g2.setFontMode(0);
             u8g2.setDrawColor(1);
@@ -95,14 +106,14 @@ void Ui::mainScreen()
             u8g2.setDrawColor(0);
             u8g2.drawStr(1, 40, s.c_str());
             break;
-        case Hotplate::ControllerState::pid:
+        case Hotplate::ControllerState::PID:
             s = "PID ";
             s += hotplate.getOutput();
             s += "/";
             s += Config::active.pid_pwm_window_ms;
             u8g2.drawStr(1, 40, s.c_str());
             break;
-        case Hotplate::ControllerState::bangOff:
+        case Hotplate::ControllerState::BangOff:
             u8g2.drawStr(1, 40, "BangOFF");
             break;
         default:
@@ -296,8 +307,8 @@ void Ui::setupScreen()
          * Quit
          */
         uint8_t sel = u8g2.userInterfaceSelectionList(s.c_str(), 1,
-                                                      "Reflow Profile\n(Display unit)\nSSR Type\nPID constants\nBangBang\n(Calibration)\nLoad saved\nSave & Quit\nQuit");
-        //                                                    1               2              3         4             5           6             7            8        9
+                                                      "Reflow Profile\n(Display unit)\nSSR Type\nPID constants\nBangBang\nPID Tuner\nLoad saved\nSave & Quit\nQuit");
+        //                                                    1               2              3         4             5       6           7            8        9
         switch (sel)
         {
         case 1: // Reflow Profile
@@ -312,6 +323,10 @@ void Ui::setupScreen()
             break;
         case 5: // BangBang values
             inputBangValues();
+            break;
+        case 6: // PID Tuner
+            hotplate.setControllerState(Hotplate::ControllerState::PIDTuner);
+            changeUiMode(uiMode::Main);
             break;
         case 7: // Load saved
             Config::load();

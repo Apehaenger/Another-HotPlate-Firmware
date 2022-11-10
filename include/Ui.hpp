@@ -27,6 +27,7 @@ private:
     bool _lastPower;
     float _lastTemp;
     short _lastProfileSecondLeft;
+    Hotplate::ControllerState _lastControllerState;
 
     void inputBangValues();
     void inputPidConstants();
