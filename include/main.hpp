@@ -1,6 +1,11 @@
 #ifndef main_h
 #define main_h
 
+#include "Ui.hpp"
+#include "Thermocouple.hpp"
+#include "Hotplate.hpp"
+#include "Profile.hpp"
+
 //#define DEBUG_SERIAL
 
 // Thermocouple (MAX6675) pins
@@ -31,5 +36,10 @@
 // Internal
 #define VERSION_TEXT "0.4.1b"
 #define INTERVAL_DISP 100 // (max) Display refresh rate (if dirty)
+
+extern Ui ui;
+extern Thermocouple thermocouple;
+extern Hotplate hotplate;
+extern Profile profile;
 
 #endif

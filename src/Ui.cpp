@@ -15,7 +15,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "main.hpp"
-#include "Display.hpp"
 #include "config.hpp"
 #include "../assets/fonts/my_u8g2_font_7x13B.hpp"
 #include "../assets/fonts/my_u8g2_font_open_iconic_embedded_2x.hpp"
@@ -28,26 +27,24 @@
  *   48 pixel i.e. blue
  */
 
-Display::Display(uint16_t interval_ms, Thermocouple *TcPtr, Hotplate *HotPtr) : Runnable(interval_ms),
-                                                                                _TcPtr(TcPtr),
-                                                                                _HotPtr(HotPtr),
-                                                                                u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE)
+Ui::Ui(uint16_t interval_ms) : Runnable(interval_ms),
+                               u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE)
 {
 }
 
-void Display::setup()
+void Ui::setup()
 {
     u8g2.begin(ROTARY_S_PIN, ROTARY_A_PIN, ROTARY_B_PIN);
     u8g2.clear();
 }
 
-void Display::mainScreen()
+void Ui::mainScreen()
 {
     // Check if we need to make the expensive display redraw
-    if (_TcPtr->getTemperatureAverage() == _lastTemp &&
-        _HotPtr->getSetpoint() == _lastTarget &&
-        _HotPtr->getPower() == _lastPower &&
-        _HotPtr->getProfileTimePosition() == _lastProfileTimePosition)
+    if (thermocouple.getTemperatureAverage() == _lastTemp &&
+        hotplate.getSetpoint() == _lastTarget &&
+        hotplate.getPower() == _lastPower &&
+        profile.getSecondsLeft() == _lastProfileSecondLeft)
     {
         return;
     }
@@ -63,12 +60,12 @@ void Display::mainScreen()
         setStdFont();
 
         // Profile / Mode
-        u8g2.drawStr(0, 13, _HotPtr->profile2str[Config::active.profile]);
+        u8g2.drawStr(0, 13, profile.profile2str[Config::active.profile]);
 
         // 2nd row
         y = 27;
-        if (Config::active.profile != Hotplate::Profile::Manual &&
-            _HotPtr->getControllerState() == Hotplate::ControllerState::off)
+        if (Config::active.profile != Profile::Profiles::Manual &&
+            hotplate.getControllerState() == Hotplate::ControllerState::off)
         {
             s = "Push to start";
             u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(s.c_str())) / 2, y, s.c_str());
@@ -76,19 +73,19 @@ void Display::mainScreen()
         else
         {
             // Target temperature
-            _lastTarget = _HotPtr->getSetpoint();
+            _lastTarget = hotplate.getSetpoint();
             sprintf(cbuf, "Target: %3d", _lastTarget);
             u8g2.drawFrame(u8g2.getStrWidth(cbuf) - (3 * 7) - 2, 16, (3 * 7) + 4, 13);
             u8g2.drawStr(0, y, cbuf);
-            if (Config::active.profile != Hotplate::Profile::Manual)
+            if (Config::active.profile != Profile::Profiles::Manual)
             {
-                sprintf(cbuf, "%3ds", _HotPtr->getProfileTimePosition());
+                sprintf(cbuf, "%3ds", profile.getSecondsLeft());
                 u8g2.drawStr(85, y, cbuf);
             }
         }
 
         // Controller state
-        switch (_HotPtr->getControllerState())
+        switch (hotplate.getControllerState())
         {
         case Hotplate::ControllerState::bangOn:
             s = "BangON";
@@ -100,7 +97,7 @@ void Display::mainScreen()
             break;
         case Hotplate::ControllerState::pid:
             s = "PID ";
-            s += _HotPtr->getOutput();
+            s += hotplate.getOutput();
             s += "/";
             s += Config::active.pid_pwm_window_ms;
             u8g2.drawStr(1, 40, s.c_str());
@@ -120,14 +117,14 @@ void Display::mainScreen()
         u8g2.setFont(my_u8g2_font_fur20);
 
         // Temperature
-        dtostrf(_TcPtr->getTemperatureAverage(), 5, 1, cbuf);
+        dtostrf(thermocouple.getTemperatureAverage(), 5, 1, cbuf);
         s = String(cbuf);
         s.concat(" °C");
         u8g2.drawUTF8(35, 64, s.c_str());
-        _lastTemp = _TcPtr->getTemperatureAverage();
+        _lastTemp = thermocouple.getTemperatureAverage();
 
         // SSR Power
-        _lastPower = _HotPtr->getPower();
+        _lastPower = hotplate.getPower();
         if (_lastPower)
         {
             u8g2.setFont(my_u8g2_font_open_iconic_embedded_2x);
@@ -137,12 +134,12 @@ void Display::mainScreen()
     } while (u8g2.nextPage());
 }
 
-void Display::changeUiMode(uiMode nextUi)
+void Ui::changeUiMode(uiMode nextUi)
 {
     uiM = nextUi;
 }
 
-void Display::userInterfaceInputDouble(const char *title, const char *pre, double *value, uint8_t numInt, uint8_t numDec, const char *post)
+void Ui::userInterfaceInputDouble(const char *title, const char *pre, double *value, uint8_t numInt, uint8_t numDec, const char *post)
 {
     uint8_t iV;
     String valueStr = "", prePart, postPart;
@@ -205,7 +202,7 @@ void Display::userInterfaceInputDouble(const char *title, const char *pre, doubl
     *value = valueStr.toDouble();
 }
 
-void Display::inputBangValues()
+void Ui::inputBangValues()
 {
     u8g2.firstPage();
     do
@@ -219,7 +216,7 @@ void Display::inputBangValues()
     } while (u8g2.nextPage());
 }
 
-void Display::inputPidConstants()
+void Ui::inputPidConstants()
 {
     u8g2.firstPage();
     do
@@ -233,13 +230,13 @@ void Display::inputPidConstants()
     } while (u8g2.nextPage());
 }
 
-void Display::setStdFont()
+void Ui::setStdFont()
 {
     // u8g2.setFont(my_u8g2_font_8x13B);
     u8g2.setFont(my_u8g2_font_7x13B);
 }
 
-void Display::inputSsrType()
+void Ui::inputSsrType()
 {
     u8g2.firstPage();
     do
@@ -258,7 +255,7 @@ void Display::inputSsrType()
     } while (u8g2.nextPage());
 }
 
-void Display::inputReflowProfile()
+void Ui::inputReflowProfile()
 {
     u8g2.firstPage();
     do
@@ -266,19 +263,19 @@ void Display::inputReflowProfile()
         setStdFont();
         String modeList = "";
 
-        for (uint8_t i = 0; i < sizeof(Hotplate::profile2str) / sizeof(char *); ++i)
+        for (uint8_t i = 0; i < sizeof(Profile::profile2str) / sizeof(char *); ++i)
         {
             if (i > 0)
                 modeList += "\n";
-            modeList += _HotPtr->profile2str[i];
+            modeList += profile.profile2str[i];
         }
 
         uint8_t sel = u8g2.userInterfaceSelectionList("Setup Profile", Config::active.profile + 1, modeList.c_str());
-        Config::active.profile = static_cast<Hotplate::Profile>(sel - 1);
+        Config::active.profile = static_cast<Profile::Profiles>(sel - 1);
     } while (u8g2.nextPage());
 }
 
-void Display::setupScreen()
+void Ui::setupScreen()
 {
     u8g2.firstPage();
     do
@@ -311,7 +308,7 @@ void Display::setupScreen()
             break;
         case 4: // PID constants
             inputPidConstants();
-            _HotPtr->updatePidGains();
+            hotplate.updatePidGains();
             break;
         case 5: // BangBang values
             inputBangValues();
@@ -329,7 +326,7 @@ void Display::setupScreen()
     } while (u8g2.nextPage());
 }
 
-void Display::loop()
+void Ui::loop()
 {
     switch (uiM)
     {

@@ -43,14 +43,12 @@
  * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
  * 64.4%  1319    86.7% 26632   Temp average
  * 63.3%  1297    86.4% 26544   Optimized Hotplate
+ * 63.9%  1309    86.2% 26482   Separated profile handling into separate class and switched to global class pointer
  * 73.0%  1496    89.5% 27480   Added/activated Serial for PID Tuner. It's going to become narrow...
  */
 #include <Arduino.h>
 #include "main.hpp"
 #include "config.hpp"
-#include "Thermocouple.hpp"
-#include "Display.hpp"
-#include "Hotplate.hpp"
 #include "Led.hpp"
 
 #if defined ATMEGA328_NEW_CH340_DBG || defined ATMEGA328_NEW_FTDI_DBG
@@ -63,11 +61,12 @@
 #endif
 
 // Init classes
-Runnable *Runnable::headRunnable = NULL;  // Runnable super-class 
-Led HotLed(LED_PIN);
-Thermocouple Tc(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
-Hotplate Hotp(PID_SAMPLE_MS, SSR_Pin, Tc);
-Display Disp(INTERVAL_DISP, &Tc, &Hotp);
+Runnable *Runnable::headRunnable = NULL; // Runnable super-class
+Led hotLed(LED_PIN);
+Thermocouple thermocouple(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
+Hotplate hotplate(PID_SAMPLE_MS, SSR_Pin);
+Profile profile(PROFILE_TIME_INTERVAL_MS, thermocouple, hotplate);
+Ui ui(INTERVAL_DISP);
 
 // Internal vars
 volatile byte rotary_aValPrev = 0;             // Rotary A, last level, see ISR(PCINT1_vect)
@@ -113,41 +112,42 @@ void setup()
 void loop()
 {
   Runnable::loopAll();
-  HotLed.blinkByTemp(Tc.getTemperatureAverage());
+  hotLed.blinkByTemp(thermocouple.getTemperatureAverage());
 }
 
 void onPlusPressed()
 {
-  if (Hotp.getSetpoint() < Config::active.pid_max_temp_c)
+  if (hotplate.getSetpoint() < Config::active.pid_max_temp_c)
   {
-    Hotp.setSetpoint(Hotp.getSetpoint() + 1);
+    hotplate.setSetpoint(hotplate.getSetpoint() + 1);
   }
 }
 
 void onMinusPressed()
 {
-  if (Hotp.getSetpoint())
+  if (hotplate.getSetpoint())
   {
-    Hotp.setSetpoint(Hotp.getSetpoint() - 1);
+    hotplate.setSetpoint(hotplate.getSetpoint() - 1);
   }
 }
 
 void onPushPressed()
 {
-  if (Config::active.profile != Hotplate::Profile::Manual &&
-      Hotp.getControllerState() == Hotplate::ControllerState::off)
-  { // Start reflow profile
-    Hotp.runProfile();
+  if (Config::active.profile != Profile::Profiles::Manual &&
+      hotplate.getControllerState() == Hotplate::ControllerState::off)
+  {
+    profile.startProfile();
   }
   else
   {
-    Hotp.setSetpoint(0);
+    profile.stopProfile();
+    hotplate.setSetpoint(0);
   }
 }
 
 void onPushLongPressed()
 {
-  Disp.changeUiMode(Display::uiMode::Setup);
+  ui.changeUiMode(Ui::uiMode::Setup);
 }
 
 ISR(PCINT1_vect)
