@@ -18,11 +18,11 @@
 #include "Hotplate.hpp"
 #include "config.hpp"
 
-Hotplate::Hotplate(uint16_t interval_ms, uint8_t ssr_pin, Thermocouple *TcPtr) : Runnable(interval_ms),
-                                                                                 _ssrPin(ssr_pin), _TcPtr(TcPtr),
-                                                                                 _myPID(&_input, &_setpoint, &_output,
-                                                                                        0, Config::active.pid_pwm_window_ms,
-                                                                                        Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
+Hotplate::Hotplate(uint16_t interval_ms, uint8_t ssr_pin, Thermocouple &TcRef) : Runnable(interval_ms),
+                                                                                       _ssrPin(ssr_pin), _TcRef(TcRef),
+                                                                                       _myPID(&_input, &_setpoint, &_output,
+                                                                                              0, Config::active.pid_pwm_window_ms,
+                                                                                              Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
 {
 }
 
@@ -184,7 +184,7 @@ void Hotplate::updatePidGains()
 void Hotplate::loop()
 {
     short nextTemp;
-    _input = _TcPtr->getTemperatureAverage();
+    _input = _TcRef.getTemperatureAverage();
 
     switch (_state)
     {
