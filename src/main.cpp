@@ -41,6 +41,7 @@
  * 62.9%  1289    82.8% 25432   0.4 without DEBUG_SERIAL
  * 62.7%  1285    82.8% 25428   0.4.0 without DEBUG_SERIAL
  * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
+ * 73.0%  1496    89.5% 27480   Added/activated Serial for PID Tuner. It's going to become narrow... 
  */
 #include <Arduino.h>
 #include "main.hpp"
@@ -73,13 +74,14 @@ volatile unsigned long rotary_sPressed_ms = 0; // volatile, see ISR(PCINT1_vect)
 
 void setup()
 {
-#ifdef DEBUG_SERIAL
-  Serial.begin(115200);
-  Serial.println("Initializing...");
+#ifndef DEBUG_AVRSTUB
+  Serial.begin(115200); // TODO: -> Setup?
+  Serial.println("Init...");
 #endif
 #ifdef DEBUG_AVRSTUB
   debug_init();
 #endif
+
   Config::load();
 
   Runnable::setupAll();
