@@ -64,7 +64,7 @@
 Runnable *Runnable::headRunnable = NULL;  // Runnable super-class 
 Led HotLed(LED_PIN);
 Thermocouple Tc(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
-Hotplate Hotp(PID_SAMPLE_MS, SSR_Pin, &Tc);
+Hotplate Hotp(PID_SAMPLE_MS, SSR_Pin, Tc);
 Display Disp(INTERVAL_DISP, &Tc, &Hotp);
 
 // Internal vars

@@ -13,7 +13,7 @@
 class Hotplate : public Runnable
 {
     const uint8_t _ssrPin;
-    Thermocouple *_TcPtr;
+    Thermocouple &_TcRef;
 
 public:
     enum State
@@ -44,7 +44,7 @@ public:
         bangOff,
     };
 
-    Hotplate(uint16_t interval_ms, uint8_t ssr_pin, Thermocouple *TcPtr);
+    Hotplate(uint16_t interval_ms, uint8_t ssr_pin, Thermocouple &TcRef);
     void setup() override;
     void loop() override;
 
