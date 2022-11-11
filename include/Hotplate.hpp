@@ -13,44 +13,58 @@ class Hotplate : public Runnable
     const uint8_t _ssrPin;
 
 public:
-/*    enum Mode
+    enum class Mode : uint8_t
     {
-        Off,
-        On,
-        PIDTuner,
-    };*/
+        Off = 0x0,
+        Manual = 0x1,
+        Profile = 0x2,
+        PIDTuner = 0x4,
+    };
 
-    enum ControllerState
+    enum class State : uint8_t
     {
-        Off,
-        PID,
-        BangOn,
-        BangOff,
-        PIDTuner,
+        Idle = 0x0,    // Waiting for "Press to start" (a flow)
+        Start = 0x1,   // Start flow
+        Heating = 0x2, // Heat up to to target temp
+        Settle = 0x4,  // Wait temp get settled
+        BangOn = 0x8,
+        BangOff = 0x10,
+        PID = 0x12,
     };
 
     Hotplate(uint16_t interval_ms, uint8_t ssr_pin);
+
     void setup() override;
     void loop() override;
 
-    ControllerState getControllerState();
+    Mode getMode();
     uint16_t getOutput();
     bool getPower();
     uint16_t getSetpoint();
+    State getState();
 
-    void setControllerState(ControllerState);
+    bool isMode(Mode);
+    bool isState(State);
+
+    void setMode(Mode);
+    void setState(State);
     void setSetpoint(uint16_t setpoint);
-    
+
     void updatePidGains();
 
 private:
     AutoPID _myPID;
-    //Mode _mode = Mode::Off;
     double _input, _setpoint = 0, _output = 0;
-    uint32_t _pwmWindowStart_ms, _pidTunerOutputNext_ms = 0;
-    ControllerState _controllerState = ControllerState::Off;
+    uint32_t _pwmWindowStart_ms, _pidTunerOutputNext_ms = 0, _pidTunerStart_ms = 0;
+    Mode _mode = Mode::Off;
+    State _state = State::Idle;
     bool _power = false;
-    const uint16_t _pidTunerTargetTemp = 100; // FIXME: Should go into setuo
+
+    // FIXME: Should go into setuo?!
+    const uint16_t _pidTunerTargetTemp = 100;
+    const uint8_t _pidTunerTempNoise_c = 2;
+    const uint8_t _pidTunerTempSettled_c = 5;
+
     void setPower(bool);
 };
 

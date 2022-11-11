@@ -35,14 +35,34 @@ void Hotplate::setup()
     _myPID.setTimeStep(PID_SAMPLE_MS); // time interval at which PID calculations are allowed to run in milliseconds
 }
 
-Hotplate::ControllerState Hotplate::getControllerState()
+Hotplate::Mode Hotplate::getMode()
 {
-    return _controllerState;
+    return _mode;
 }
 
-void Hotplate::setControllerState(ControllerState state)
+bool Hotplate::isMode(Mode mode)
 {
-    _controllerState = state;
+    return _mode == mode;
+}
+
+void Hotplate::setMode(Mode mode)
+{
+    _mode = mode;
+}
+
+Hotplate::State Hotplate::getState()
+{
+    return _state;
+}
+
+bool Hotplate::isState(State state)
+{
+    return _state == state;
+}
+
+void Hotplate::setState(State state)
+{
+    _state = state;
 }
 
 uint16_t Hotplate::getOutput()
@@ -72,17 +92,17 @@ void Hotplate::setSetpoint(uint16_t setpoint)
 
     if (!_setpoint)
     {
-        //_mode = Mode::Off;
-        _controllerState = ControllerState::Off;
+        _mode = Mode::Off;
+        _state = State::Idle;
         _myPID.stop();
         _output = 0;
         setPower(false); // Don't wait for the next loop()
         return;
     }
 
-    if (_controllerState == ControllerState::Off)
+    if (_state == State::Idle)
     {
-        _controllerState = ControllerState::PID;
+        _state = State::PID;
     }
     _myPID.run();
     //_mode = Mode::On;
@@ -99,31 +119,38 @@ void Hotplate::updatePidGains()
 
 void Hotplate::loop()
 {
+    uint32_t now = millis();
     _input = thermocouple.getTemperatureAverage();
 
-    switch (_controllerState)
+    switch (_state)
     {
-    case ControllerState::Off:
+    case State::Idle: // Wait for "Press start"
         setPower(false);
         return;
-    case ControllerState::PID:
-    case ControllerState::BangOn:
-    case ControllerState::BangOff:
+    case State::PID:
+    case State::BangOn:
+    case State::BangOff:
         _myPID.run();
         // Informative state changes. Logic copied from AutoPID.cpp
         if (Config::active.pid_bangOn_temp_c && ((_setpoint - _input) > Config::active.pid_bangOn_temp_c))
-            _controllerState = ControllerState::BangOn;
+            _state = State::BangOn;
         else if (Config::active.pid_bangOff_temp_c && ((_input - _setpoint) > Config::active.pid_bangOff_temp_c))
-            _controllerState = ControllerState::BangOff;
+            _state = State::BangOff;
         else
-            _controllerState = ControllerState::PID;
+            _state = State::PID;
         break;
-    case ControllerState::PIDTuner:
+    case State::Start:
+        Serial.println("Copy & Paste to https://pidtuner.com");
+        Serial.println("Time, Input, Output");
+        Serial.println("-------------------");
+
+        _pidTunerStart_ms = now;
+        _state = State::Heating;
+        _output = Config::active.pid_pwm_window_ms;
         break;
     }
 
     // Soft PWM
-    uint32_t now = millis();
     if (now - _pwmWindowStart_ms > Config::active.pid_pwm_window_ms)
     { // time to shift the Relay Window
         _pwmWindowStart_ms += Config::active.pid_pwm_window_ms;
@@ -136,17 +163,19 @@ void Hotplate::loop()
     Serial.print(", Input: ");
     Serial.print(_input);
     Serial.print(", Controller state: ");
-    Serial.print(_controllerState);
+    Serial.print(_state);
     Serial.print(", Output: ");
     Serial.print(_output);
     Serial.print(", SSR: ");
     Serial.println(_power);
 #endif
 
-    if (_controllerState == ControllerState::PIDTuner && now >= _pidTunerOutputNext_ms)
+    if (_mode == Mode::PIDTuner &&
+        _state != State::Idle &&
+        now >= _pidTunerOutputNext_ms)
     {
         _pidTunerOutputNext_ms = now + PID_TUNER_INTERVAL_MS;
-        Serial.print((float)now / 1000);
+        Serial.print((float)(now - _pidTunerStart_ms) / 1000);
         Serial.print(", ");
         Serial.print(_power);
         Serial.print(", ");

@@ -115,12 +115,19 @@ void loop()
   hotLed.blinkByTemp(thermocouple.getTemperatureAverage());
 }
 
-bool isProfileStart()
+/**
+ * @brief Start if a flow like PIDTuner or ReflowProfile is idle (waiting to get started)
+ *
+ * @return true if there was an idle flow, or is a running flow
+ * @return false if there isn't a flow
+ */
+bool startIdleFlow()
 {
-  if (Config::active.profile != Profile::Profiles::Manual &&
-      hotplate.getControllerState() == Hotplate::ControllerState::Off)
+  // Order matters!
+  if ((hotplate.isMode(Hotplate::Mode::Profile) || hotplate.isMode(Hotplate::Mode::PIDTuner)) &&
+      hotplate.isState(Hotplate::State::Idle))
   {
-    profile.startProfile();
+    hotplate.setState(Hotplate::State::Start);
     return true;
   }
   return false;
@@ -130,7 +137,7 @@ void onPlusPressed()
 {
   if (hotplate.getSetpoint() < Config::active.pid_max_temp_c)
   {
-    isProfileStart();
+    startIdleFlow();
     hotplate.setSetpoint(hotplate.getSetpoint() + 1);
   }
 }
@@ -139,15 +146,17 @@ void onMinusPressed()
 {
   if (hotplate.getSetpoint())
   {
-    isProfileStart();
+    startIdleFlow();
     hotplate.setSetpoint(hotplate.getSetpoint() - 1);
   }
 }
 
 void onPushPressed()
 {
-  if (!isProfileStart())
+  if (!startIdleFlow())
   {
+    hotplate.setMode(Hotplate::Mode::Off);
+    hotplate.setState(Hotplate::State::Idle);
     profile.stopProfile();
     hotplate.setSetpoint(0);
   }

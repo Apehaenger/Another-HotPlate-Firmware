@@ -45,14 +45,15 @@ void Ui::mainScreen()
         hotplate.getSetpoint() == _lastTarget &&
         hotplate.getPower() == _lastPower &&
         profile.getSecondsLeft() == _lastProfileSecondLeft &&
-        hotplate.getControllerState() == _lastControllerState)
+        hotplate.getState() == _lastState &&
+        hotplate.getMode() == _lastMode)
     {
         return;
     }
 
     char cbuf[12]; // Longest entry length = "Target: 123\0"
     String s = "";
-    u8g2_uint_t y;
+    u8g2_uint_t x, y;
 
     u8g2.firstPage();
     do
@@ -62,21 +63,31 @@ void Ui::mainScreen()
 
         // 1st row
         y = 13;
-        // Profile / Mode
-        if (hotplate.getControllerState() == Hotplate::ControllerState::PIDTuner)
+        // Mode
+        switch (hotplate.getMode())
         {
-            u8g2.drawStr(0, y, "PID Tuner");
-        }
-        else
-        {
+        case Hotplate::Mode::PIDTuner:
+            u8g2.drawStr(0, y, "PID Tuner:");
+            x = 50;
+            switch (hotplate.getState())
+            {
+            case Hotplate::State::Heating:
+                u8g2.drawStr(x, y, "Heating ...");
+                break;
+            case Hotplate::State::Settle:
+                u8g2.drawStr(0, y, "Settling ...");
+                break;
+            }
+            break;
+        default:
             u8g2.drawStr(0, y, profile.profile2str[Config::active.profile]);
+            break;
         }
 
         // 2nd row
         y = 27;
         if (Config::active.profile != Profile::Profiles::Manual &&
-            (hotplate.getControllerState() == Hotplate::ControllerState::Off ||
-            hotplate.getControllerState() == Hotplate::ControllerState::PIDTuner))
+            hotplate.getState() == Hotplate::State::Idle)
         {
             s = "Push to start";
             u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(s.c_str())) / 2, y, s.c_str());
@@ -96,9 +107,9 @@ void Ui::mainScreen()
         }
 
         // Controller state
-        switch (hotplate.getControllerState())
+        switch (hotplate.getState())
         {
-        case Hotplate::ControllerState::BangOn:
+        case Hotplate::State::BangOn:
             s = "BangON";
             u8g2.setFontMode(0);
             u8g2.setDrawColor(1);
@@ -106,14 +117,14 @@ void Ui::mainScreen()
             u8g2.setDrawColor(0);
             u8g2.drawStr(1, 40, s.c_str());
             break;
-        case Hotplate::ControllerState::PID:
+        case Hotplate::State::PID:
             s = "PID ";
             s += hotplate.getOutput();
             s += "/";
             s += Config::active.pid_pwm_window_ms;
             u8g2.drawStr(1, 40, s.c_str());
             break;
-        case Hotplate::ControllerState::BangOff:
+        case Hotplate::State::BangOff:
             u8g2.drawStr(1, 40, "BangOFF");
             break;
         default:
@@ -325,7 +336,7 @@ void Ui::setupScreen()
             inputBangValues();
             break;
         case 6: // PID Tuner
-            hotplate.setControllerState(Hotplate::ControllerState::PIDTuner);
+            hotplate.setMode(Hotplate::Mode::PIDTuner);
             changeUiMode(uiMode::Main);
             break;
         case 7: // Load saved
