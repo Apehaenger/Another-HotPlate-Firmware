@@ -28,11 +28,12 @@ As we all have some kind of fetish, and mine seem to be that I tend to over-opti
 - "Manual" or (open-end) "Reflow-Profile" Mode, with built-in reflow profiles for low-temp. solder paste Sn42/Bi57.6/Ag0.4, as well as high-temp. Sn96.5/Ag3.0/Cu0. After (as well as during) the reflow profile time targets, the user may adapt the target temp. (every 10 seconds). At profile end, the last target temp remain active and the user has to stop the profile manually when everything reflowed correctly.
 
     ![Reflow Profiles](assets/images/ReflowProfiles.jpg)
+    ![Reflow Profile Start](assets/images/ReflowProfile-Start.jpg)
     ![Running Reflow Profile](assets/images/ReflowProfile-1.jpg)
 
 - PID constant settings (within built-in setup)
 
-    ![Setup PID constant Kp](assets/images/Setup-PID.jpg)
+    ![Setup PID constant Kp](assets/images/Setup-PID-Kp.jpg)
     ![Setup PID constant Kd](assets/images/Setup-PID-Kd.jpg)
     ![Setup PID constant Ki](assets/images/Setup-PID-Ki.jpg)
 
