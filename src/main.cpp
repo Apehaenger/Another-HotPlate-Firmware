@@ -25,35 +25,19 @@
  * - Resturcture Ui class with more cleare methods like pushToStart(), setTitle(),
  *   so that the display get controlled by the related flow and not visa versa lije now.
  * - Redraw only the relevant stuff
- * - Will profile timing in ms instead of s save mem and flash?
  *
  * Usage:
  *     RAM      |    Flash    | Comment
  * ----------------------------------------------------------------------
  * 71.9%  1473    91.8% 28186   0.3.0 new Bootloader
- * 71.9%  1473    91.8% 28186   Removed while(true) loop in void loop()
- * 72.1%  1477    90.7% 27874   Reduced open iconic to used icon
- * 72.1%  1477    86.0% 26432   Reduced 8x13B font
- * 72.1%  1477    85.7% 26328   Reduced fur20 font
- * 78.9%  1615    86.6% 26592   Profiles, profile selection & storage, switch to 7x13B
- * 77.5%  1587    86.9% 26706   + "Push to start", before global optimization
- * 77.5%  1587    86.4% 26542   Moved global target to Hotplate::_setpoint and added/implemented getter and setter
- * 77.5%  1587    86.3% 26518   Moved global ssrOn to Hotplate::_power and added/implemented getter and setter
- * 77.1%  1579    86.0% 26418   Migrated rotary.cpp|hpp into main
- * 77.1%  1579    85.5% 26280   Optimized Thermocouple and removed global mVals
- * 77.1%  1580    85.6% 26296   Moved LED to class
- * 77.4%  1585    85.9% 26398   Fixed shared vars from TC/Hotplate
- * 75.5%  1546    87.0% 26728   Finished reflow profile
- * 75.6%  1548    87.1% 26758   Changed unsigned long to uint32_t and fixed two bugs
  * 62.9%  1289    82.8% 25432   0.4 without DEBUG_SERIAL
  * 62.7%  1285    82.8% 25428   0.4.0 without DEBUG_SERIAL
  * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
- * 64.4%  1319    86.7% 26632   Temp average
- * 63.3%  1297    86.4% 26544   Optimized Hotplate
  * 63.9%  1309    86.2% 26482   Separated profile handling into separate class and switched to global class pointer
  * 72.8%  1490    89.5% 27492   Added/activated Serial for PID Tuner. It's going to become narrow...
  * 81.1%  1660    95.8% 29416   PID Tuner and final corrections. Everything looks fine
  * 79.9%  1636    95.4% 29316   Simplifid initial PID-Tuner wait time
+ * 79.9%  1636    95.3% 29282   Optimized profile time calculations
  */
 #include <Arduino.h>
 #include "main.hpp"

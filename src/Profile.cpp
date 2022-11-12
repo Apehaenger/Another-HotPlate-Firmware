@@ -105,8 +105,9 @@ uint16_t Profile::getTempTarget()
     uint32_t now = millis();
     uint16_t nextTemp;
     ProfileTimeTarget timeTarget;
+    uint32_t targetTime_ms;
 
-    for (uint8_t i = 0; i < _profile2timeTargets[Config::active.profile]->length; i++)
+        for (uint8_t i = 0; i < _profile2timeTargets[Config::active.profile]->length; i++)
     {
         timeTarget = _profile2timeTargets[Config::active.profile]->timeTargets[i]; // Make code more readable
 
@@ -121,7 +122,8 @@ uint16_t Profile::getTempTarget()
         Serial.println(timeTarget.temp_c);
 #endif
 
-        if ((now - _profileStart_ms) > (1000UL * timeTarget.time_s) ||
+        targetTime_ms = 1000UL * timeTarget.time_s;
+        if ((now - _profileStart_ms) > targetTime_ms ||
             thermocouple.getTemperatureAverage() > timeTarget.temp_c) // FIXME: This would result in a wrong profile time left display if already hot
         {
             continue; // Already beyond this time or temp target
@@ -129,8 +131,8 @@ uint16_t Profile::getTempTarget()
 
         // In-line math in C sucks :-/
         float tempDiff = timeTarget.temp_c - thermocouple.getTemperatureAverage();
-        float timeLeft_ms = (1000.0 * timeTarget.time_s) + _profileStart_ms - now;
-        float intervalsProfile = (1000.0 * timeTarget.time_s) / PROFILE_TIME_INTERVAL_MS;
+        float timeLeft_ms = targetTime_ms + _profileStart_ms - now;
+        float intervalsProfile = targetTime_ms / PROFILE_TIME_INTERVAL_MS;
         float intervalsLeft = (timeLeft_ms / PROFILE_TIME_INTERVAL_MS) - 1;
 
         nextTemp = thermocouple.getTemperatureAverage() + round(tempDiff / intervalsProfile * (intervalsProfile - intervalsLeft));
