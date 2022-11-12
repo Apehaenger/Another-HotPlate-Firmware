@@ -71,7 +71,7 @@ void Ui::mainScreen()
             x = 71;
             switch (hotplate.getState())
             {
-            case Hotplate::State::Heating:
+            case Hotplate::State::Heat:
                 u8g2.drawStr(x, y, "Heat...");
                 break;
             case Hotplate::State::Settle:

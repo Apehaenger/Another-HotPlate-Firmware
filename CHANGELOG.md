@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved profile handling into a separate class
 - Resturctured handling of objects via globals (instead of space wasting pointer/reference parameter)
 - General handling of 
+- Changed initial PID-Tuner wait time and saved some resources
 
 <!-- Further samples:
 

@@ -38,12 +38,13 @@ public:
         // Control flow purposes
         StandBy = 0x0, // Waiting for "Press to start" (a process flow)
         Start = 0x1,   // Start flow
-        Heating = 0x2, // Heat up to to target temp
-        Settle = 0x4,  // Wait temp get settled
+        Wait = 0x2,    // Wait some off time
+        Heat = 0x4, // Heat up to to target temp
+        Settle = 0x8,  // Wait temp get settled
         // Informational (display) purposes
-        BangOn = 0x8,
-        BangOff = 0x10,
-        PID = 0x12,
+        BangOn = 0x10,
+        BangOff = 0x20,
+        PID = 0x40,
     };
 
     Hotplate(uint16_t interval_ms, uint8_t ssr_pin);
@@ -70,7 +71,7 @@ public:
 private:
     AutoPID _myPID;
     double _input, _setpoint = 0, _output = 0;
-    uint32_t _pwmWindowStart_ms, _pidTunerOutputNext_ms = 0, _pidTunerStart_ms = 0;
+    uint32_t _pwmWindowStart_ms, _pidTunerOutputNext_ms = 0;
     Mode _mode = Mode::Manual;
     State _state = State::StandBy;
     bool _power = false;
@@ -81,6 +82,7 @@ private:
     const uint8_t _pidTunerTempSettled = 10;
     uint16_t _pidTunerTempMax;
 
+    bool pwmWindowReached();
     void setPower(bool);
 };
 

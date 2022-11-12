@@ -116,6 +116,11 @@ void Hotplate::updatePidGains()
     _myPID.setGains(Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd);
 }
 
+bool Hotplate::pwmWindowReached()
+{
+    return (millis() - _pwmWindowStart_ms > Config::active.pid_pwm_window_ms);
+}
+
 /**
  * @brief Is the current mode & state a startable process (like PIDTuner), and stand-by (waiting to get started)?
  *
@@ -158,19 +163,19 @@ void Hotplate::loop()
         Serial.println("Copy & Paste to https://pidtuner.com");
         Serial.println("Time, Input, Output");
         serialPrintLine();
-        // PID Tuner calculations may fail if not started with 0
-        Serial.print("-10.00, 0, ");
-        Serial.println(_input);
-        Serial.print("-0.01, 0, ");
-        Serial.println(_input);
-
-        _setpoint = _pidTunerTempTarget;
-        _pidTunerStart_ms = now;
         _pwmWindowStart_ms = now;
-        _state = State::Heating;
+        _state = State::Wait;
+        break;
+    case State::Wait: // Wait one pwmWindow before start. PID Tuner calculations may fail if not started with 0 output
+        if (!pwmWindowReached())
+        {
+            break;
+        }
+        _setpoint = _pidTunerTempTarget;
+        _state = State::Heat;
         _output = Config::active.pid_pwm_window_ms;
         break;
-    case State::Heating:
+    case State::Heat:
         if (_input > _setpoint) // By the use of _input the user may adapt the target during heatup
         {
             _pidTunerTempTarget = _setpoint;
@@ -200,7 +205,7 @@ void Hotplate::loop()
     }
 
     // Soft PWM
-    if (now - _pwmWindowStart_ms > Config::active.pid_pwm_window_ms)
+    if (pwmWindowReached())
     { // time to shift the Relay Window
         _pwmWindowStart_ms += Config::active.pid_pwm_window_ms;
     }
@@ -223,7 +228,7 @@ void Hotplate::loop()
         now >= _pidTunerOutputNext_ms)
     {
         _pidTunerOutputNext_ms = now + PID_TUNER_INTERVAL_MS;
-        Serial.print((float)(now - _pidTunerStart_ms) / 1000);
+        Serial.print((float)now / 1000);
         Serial.print(", ");
         Serial.print(_output);
         Serial.print(", ");
