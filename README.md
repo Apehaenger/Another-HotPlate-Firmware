@@ -21,34 +21,58 @@ As we all have some kind of fetish, and mine seem to be that I tend to over-opti
 
 ## Features
 
-- Built-in "Setup" within Hot-Plate user interface
+### Setup
 
-    ![Built-in Setup](assets/images/Setup-1.jpg)
+Built-in "Setup" within Hot-Plate user interface
 
-- "Manual" or (open-end) "Reflow-Profile" Mode, with built-in reflow profiles for low-temp. solder paste Sn42/Bi57.6/Ag0.4, as well as high-temp. Sn96.5/Ag3.0/Cu0. After (as well as during) the reflow profile time targets, the user may adapt the target temp. (every 10 seconds). At profile end, the last target temp remain active and the user has to stop the profile manually when everything reflowed correctly.
+![Built-in Setup](assets/images/Setup-1.jpg)
 
-    ![Reflow Profiles](assets/images/ReflowProfiles.jpg)
-    ![Reflow Profile Start](assets/images/ReflowProfile-Start.jpg)
-    ![Running Reflow Profile](assets/images/ReflowProfile-1.jpg)
+### Reflow Profile
 
-- PID constant settings (within built-in setup)
+"Manual" or (open-end) "Reflow-Profile" Mode, with built-in reflow profiles for low-temp. solder paste Sn42/Bi57.6/Ag0.4, as well as high-temp. Sn96.5/Ag3.0/Cu0. After (as well as during) the reflow profile time targets, the user may adapt the target temp. (every 10 seconds). At profile end, the last target temp remain active and the user has to stop the profile manually when everything reflowed correctly.
 
-    ![Setup PID constant Kp](assets/images/Setup-PID-Kp.jpg)
-    ![Setup PID constant Kd](assets/images/Setup-PID-Kd.jpg)
-    ![Setup PID constant Ki](assets/images/Setup-PID-Ki.jpg)
+![Reflow Profiles](assets/images/ReflowProfiles.jpg)
+![Reflow Profile Start](assets/images/ReflowProfile-Start.jpg)
+![Running Reflow Profile](assets/images/ReflowProfile-1.jpg)
 
-- BangON/BangOFF (quick start) settings and functionality. Mainly for bad/non-configuraed PID controller constants (a good configured PID controller normally does not need BangON/BangOFF, but PID controller constant determination is complicated and time consuming)
+### [PID Tuner](https://pidtuner.com) support
 
-    ![Setup BangON](assets/images/Setup-BangON.jpg)
-    ![Setup BangOFF](assets/images/Setup-BangOFF.jpg)
+Simply start an automatic [step response](https://en.wikipedia.org/wiki/Step_response) run, with a connected serial console.
+Afterwards copy the resulting data into [PID Tuner](https://pidtuner.com) and (auto-)tune your PID constants.
+BTW: This step response run will also caluclate the overshot of the tuned target temperature which might be used (at least as indication) for the [BangON](#bangonbangoff) setting. 
 
-- SSR type (active-low/high) configurable within buit-in setup
+![Setup BangON](assets/images/PIDTuner-Start.jpg)
+![Setup BangOFF](assets/images/PIDTuner-Heat.jpg)
+![Setup BangOFF](assets/images/PIDTuner-Settle.jpg)
+![Setup BangOFF](assets/images/PIDTuner-Output-1.jpg)
 
-    ![Setup SSR Type](assets/images/Setup-SSR.jpg)
+### PID constants
 
-- Save of settings to EEPROM possible within built-in setup 
+Either you know your PID constants, evaluate them the hard way "by hand" or use [PID Tuner support](#pid-tuner-support) for assistance in PID constant determination. 
 
-    ![Setup Save](assets/images/Setup-Save.jpg)
+![Setup PID constant Kp](assets/images/Setup-PID-Kp.jpg)
+![Setup PID constant Kd](assets/images/Setup-PID-Kd.jpg)
+![Setup PID constant Ki](assets/images/Setup-PID-Ki.jpg)
+
+### BangON/BangOff
+
+Quick start/Overshoot reduction settings and functionality. Mainly for bad/non-configuraed PID controller constants.
+A good configured PID controller normally does not need BangON/BangOFF, but PID controller constant determination is complicated and time consuming. See [PID Tuner support](#pid-tuner-support) for assistance in PID constant determination.
+
+![Setup BangON](assets/images/Setup-BangON.jpg)
+![Setup BangOFF](assets/images/Setup-BangOFF.jpg)
+
+### SSR type
+
+Active-low/high configurable within buit-in setup
+
+![Setup SSR Type](assets/images/Setup-SSR.jpg)
+
+### Save
+
+Save of settings to EEPROM possible within built-in setup 
+
+![Setup Save](assets/images/Setup-Save.jpg)
 
 ## Requirements
 
@@ -64,9 +88,9 @@ Assembled DIY Hot Plate like described in "[Tim's Hot Plate](https://www.instruc
 
 ## Roadmap
 
-- [ ] Step response output for easier PID constant determination by the help of [PID Tuner](https://pidtuner.com)
+- [X] Step response output for easier PID constant determination by the help of [PID Tuner](https://pidtuner.com)
 - [ ] Some kind of PID loop tuning/calibration
-- [ ] Ramp-up determination to identify PTC time and TC delay (BangON calibration)
+- [X] Ramp-up determination to identify ~~PTC time and TC delay~~ (BangON calibration)
 - [ ] Progressive rotary switching for quicker +/- move
 - [ ] C/F unit selection (if someone is interested in)
 - [ ] Larger display so that I don't need my glasses (old man wish)
