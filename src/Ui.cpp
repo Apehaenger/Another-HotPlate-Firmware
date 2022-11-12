@@ -88,7 +88,7 @@ void Ui::mainScreen()
 
         // 2nd row
         y = 25; // For two color display need to be >= 25 
-        if (hotplate.isStandBy() || profile.isStandBy())
+        if (hotplate.isStandBy() || (!hotplate.isMode(Hotplate::Mode::PIDTuner) && profile.isStandBy()))
         {
             s = "Push to start";
             u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(s.c_str())) / 2, y, s.c_str());
@@ -100,7 +100,7 @@ void Ui::mainScreen()
             sprintf(cbuf, "Target: %3d", _lastTarget);
             //u8g2.drawFrame(u8g2.getStrWidth(cbuf) - (3 * 7) - 3, y - 12, (3 * 7) + 6, 15);
             u8g2.drawStr(0, y, cbuf);
-            if (Config::active.profile != Profile::Profiles::Manual)
+            if (Config::active.profile != Profile::Profiles::Manual && !hotplate.isMode(Hotplate::Mode::PIDTuner))
             {
                 sprintf(cbuf, "%3ds", profile.getSecondsLeft());
                 u8g2.drawStr(85, y, cbuf);
