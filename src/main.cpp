@@ -20,6 +20,14 @@
  *
  * Author: Jörg Ebeling <joerg@ebeling.ws>
  *
+ * TODO:
+ * - Inject an initial wait process instead of the injected -time start.
+ *   This should also make _pidTunerStart_ms obsolete.
+ * - Resturcture Ui class with more cleare methods like pushToStart(), setTitle(),
+ *   so that the display get controlled by the related flow and not visa versa lije now.
+ * - Redraw only the relevant stuff
+ * - Will profile timing in ms instead of s save mem and flash?
+ *
  * Usage:
  *     RAM      |    Flash    | Comment
  * ----------------------------------------------------------------------
@@ -41,7 +49,10 @@
  * 62.9%  1289    82.8% 25432   0.4 without DEBUG_SERIAL
  * 62.7%  1285    82.8% 25428   0.4.0 without DEBUG_SERIAL
  * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
+ * 64.4%  1319    86.7% 26632   Temp average
+ * 63.3%  1297    86.4% 26544   Optimized Hotplate
  * 63.9%  1309    86.2% 26482   Separated profile handling into separate class and switched to global class pointer
+ * 72.8%  1490    89.5% 27492   Added/activated Serial for PID Tuner. It's going to become narrow...
  */
 #include <Arduino.h>
 #include "main.hpp"
@@ -62,7 +73,7 @@ Runnable *Runnable::headRunnable = NULL; // Runnable super-class
 Led hotLed(LED_PIN);
 Thermocouple thermocouple(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
 Hotplate hotplate(PID_SAMPLE_MS, SSR_Pin);
-Profile profile(PROFILE_TIME_INTERVAL_MS, thermocouple, hotplate);
+Profile profile(PROFILE_TIME_INTERVAL_MS);
 Ui ui(INTERVAL_DISP);
 
 // Internal vars
@@ -72,13 +83,14 @@ volatile unsigned long rotary_sPressed_ms = 0; // volatile, see ISR(PCINT1_vect)
 
 void setup()
 {
-#ifdef DEBUG_SERIAL
-  Serial.begin(115200);
-  Serial.println("Initializing...");
+#ifndef DEBUG_AVRSTUB
+  Serial.begin(115200); // TODO: -> Setup?
+  Serial.println("Init...");
 #endif
 #ifdef DEBUG_AVRSTUB
   debug_init();
 #endif
+
   Config::load();
 
   Runnable::setupAll();
@@ -111,10 +123,31 @@ void loop()
   hotLed.blinkByTemp(thermocouple.getTemperatureAverage());
 }
 
+/**
+ * @brief Start if a process like PIDTuner or ReflowProfile is idle (waiting to get started)
+ *
+ * @return true if there was an idle process
+ * @return false if there isn't an idle process
+ */
+bool startIfStandByProcess()
+{
+  if (hotplate.isStandBy())
+  {
+      hotplate.setState(Hotplate::State::Start);
+      return true;
+  }
+  if (profile.isStandBy())
+  {
+    return profile.startProfile();
+  }
+  return false;
+}
+
 void onPlusPressed()
 {
   if (hotplate.getSetpoint() < Config::active.pid_max_temp_c)
   {
+    startIfStandByProcess();
     hotplate.setSetpoint(hotplate.getSetpoint() + 1);
   }
 }
@@ -123,19 +156,17 @@ void onMinusPressed()
 {
   if (hotplate.getSetpoint())
   {
+    startIfStandByProcess();
     hotplate.setSetpoint(hotplate.getSetpoint() - 1);
   }
 }
 
 void onPushPressed()
 {
-  if (Config::active.profile != Profile::Profiles::Manual &&
-      hotplate.getControllerState() == Hotplate::ControllerState::off)
+  if (!startIfStandByProcess())
   {
-    profile.startProfile();
-  }
-  else
-  {
+    hotplate.setMode(Hotplate::Mode::Manual);
+    hotplate.setState(Hotplate::State::StandBy);
     profile.stopProfile();
     hotplate.setSetpoint(0);
   }

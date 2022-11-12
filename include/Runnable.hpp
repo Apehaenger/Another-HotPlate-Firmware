@@ -26,11 +26,14 @@
  */
 class Runnable
 {
+private:
     static Runnable *headRunnable;
 
     Runnable *_nextRunnable;
-    uint32_t _nextInterval_ms;
     const uint16_t _interval_ms;
+
+protected:
+    uint32_t _nextInterval_ms;
 
 public:
     Runnable(uint32_t interval_ms) : _interval_ms(interval_ms)

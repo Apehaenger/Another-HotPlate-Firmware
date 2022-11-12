@@ -44,14 +44,16 @@ void Ui::mainScreen()
     if (thermocouple.getTemperatureAverage() == _lastTemp &&
         hotplate.getSetpoint() == _lastTarget &&
         hotplate.getPower() == _lastPower &&
-        profile.getSecondsLeft() == _lastProfileSecondLeft)
+        profile.getSecondsLeft() == _lastProfileSecondLeft &&
+        hotplate.getState() == _lastState &&
+        hotplate.getMode() == _lastMode)
     {
         return;
     }
 
     char cbuf[12]; // Longest entry length = "Target: 123\0"
     String s = "";
-    u8g2_uint_t y;
+    u8g2_uint_t x, y;
 
     u8g2.firstPage();
     do
@@ -59,13 +61,34 @@ void Ui::mainScreen()
         // Standard (small font)
         setStdFont();
 
-        // Profile / Mode
-        u8g2.drawStr(0, 13, profile.profile2str[Config::active.profile]);
+        // 1st row
+        y = 9;
+        // Mode
+        switch (hotplate.getMode())
+        {
+        case Hotplate::Mode::PIDTuner:
+            u8g2.drawStr(0, y, "PID Tuner:");
+            x = 71;
+            switch (hotplate.getState())
+            {
+            case Hotplate::State::Heating:
+                u8g2.drawStr(x, y, "Heat...");
+                break;
+            case Hotplate::State::Settle:
+                u8g2.drawStr(x, y, "Settle...");
+                break;
+            default:
+                break;
+            }
+            break;
+        default:
+            u8g2.drawStr(0, y, profile.profile2str[Config::active.profile]);
+            break;
+        }
 
         // 2nd row
-        y = 27;
-        if (Config::active.profile != Profile::Profiles::Manual &&
-            hotplate.getControllerState() == Hotplate::ControllerState::off)
+        y = 25; // For two color display need to be >= 25 
+        if (hotplate.isStandBy() || profile.isStandBy())
         {
             s = "Push to start";
             u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(s.c_str())) / 2, y, s.c_str());
@@ -75,7 +98,7 @@ void Ui::mainScreen()
             // Target temperature
             _lastTarget = hotplate.getSetpoint();
             sprintf(cbuf, "Target: %3d", _lastTarget);
-            u8g2.drawFrame(u8g2.getStrWidth(cbuf) - (3 * 7) - 2, 16, (3 * 7) + 4, 13);
+            //u8g2.drawFrame(u8g2.getStrWidth(cbuf) - (3 * 7) - 3, y - 12, (3 * 7) + 6, 15);
             u8g2.drawStr(0, y, cbuf);
             if (Config::active.profile != Profile::Profiles::Manual)
             {
@@ -85,9 +108,9 @@ void Ui::mainScreen()
         }
 
         // Controller state
-        switch (hotplate.getControllerState())
+        switch (hotplate.getState())
         {
-        case Hotplate::ControllerState::bangOn:
+        case Hotplate::State::BangOn:
             s = "BangON";
             u8g2.setFontMode(0);
             u8g2.setDrawColor(1);
@@ -95,14 +118,14 @@ void Ui::mainScreen()
             u8g2.setDrawColor(0);
             u8g2.drawStr(1, 40, s.c_str());
             break;
-        case Hotplate::ControllerState::pid:
+        case Hotplate::State::PID:
             s = "PID ";
             s += hotplate.getOutput();
             s += "/";
             s += Config::active.pid_pwm_window_ms;
             u8g2.drawStr(1, 40, s.c_str());
             break;
-        case Hotplate::ControllerState::bangOff:
+        case Hotplate::State::BangOff:
             u8g2.drawStr(1, 40, "BangOFF");
             break;
         default:
@@ -296,8 +319,8 @@ void Ui::setupScreen()
          * Quit
          */
         uint8_t sel = u8g2.userInterfaceSelectionList(s.c_str(), 1,
-                                                      "Reflow Profile\n(Display unit)\nSSR Type\nPID constants\nBangBang\n(Calibration)\nLoad saved\nSave & Quit\nQuit");
-        //                                                    1               2              3         4             5           6             7            8        9
+                                                      "Reflow Profile\n(Display unit)\nSSR Type\nPID constants\nBangBang\nPID Tuner\nLoad saved\nSave & Quit\nQuit");
+        //                                                    1               2              3         4             5       6           7            8        9
         switch (sel)
         {
         case 1: // Reflow Profile
@@ -312,6 +335,10 @@ void Ui::setupScreen()
             break;
         case 5: // BangBang values
             inputBangValues();
+            break;
+        case 6: // PID Tuner
+            hotplate.setMode(Hotplate::Mode::PIDTuner);
+            changeUiMode(uiMode::Main);
             break;
         case 7: // Load saved
             Config::load();

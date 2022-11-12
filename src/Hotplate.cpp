@@ -35,9 +35,34 @@ void Hotplate::setup()
     _myPID.setTimeStep(PID_SAMPLE_MS); // time interval at which PID calculations are allowed to run in milliseconds
 }
 
-Hotplate::ControllerState Hotplate::getControllerState()
+Hotplate::Mode Hotplate::getMode()
 {
-    return _controllerState;
+    return _mode;
+}
+
+bool Hotplate::isMode(Mode mode)
+{
+    return _mode == mode;
+}
+
+void Hotplate::setMode(Mode mode)
+{
+    _mode = mode;
+}
+
+Hotplate::State Hotplate::getState()
+{
+    return _state;
+}
+
+bool Hotplate::isState(State state)
+{
+    return _state == state;
+}
+
+void Hotplate::setState(State state)
+{
+    _state = state;
 }
 
 uint16_t Hotplate::getOutput()
@@ -65,56 +90,116 @@ void Hotplate::setSetpoint(uint16_t setpoint)
 {
     _setpoint = setpoint;
 
-    if (_setpoint)
+    if (!_setpoint)
     {
-        //_myPID.stop();
-        _myPID.run();
-        _state = State::On;
-        _pwmWindowStart_ms = millis();
-    }
-    else
-    {
-        _state = State::Off;
-        _controllerState = ControllerState::off;
+        _mode = Mode::Manual;
+        _state = State::StandBy;
         _myPID.stop();
         _output = 0;
         setPower(false); // Don't wait for the next loop()
+        return;
     }
+
+    if (_state == State::StandBy)
+    {
+        _state = State::PID;
+    }
+    _myPID.run();
+    _pwmWindowStart_ms = millis();
 }
 
 /**
- * @brief Update PID controllers PID gains from (probably actualized) config
+ * @brief Update PID controllers PID gains
  */
 void Hotplate::updatePidGains()
 {
     _myPID.setGains(Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd);
 }
 
+/**
+ * @brief Is the current mode & state a startable process (like PIDTuner), and stand-by (waiting to get started)?
+ *
+ * @return true if there is an idle process
+ * @return false if not
+ */
+bool Hotplate::isStandBy()
+{
+    return (isMode(Mode::PIDTuner) && isState(State::StandBy));
+}
+
+void serialPrintLine()
+{
+    Serial.println("-------------------");
+}
+
 void Hotplate::loop()
 {
+    uint32_t now = millis();
     _input = thermocouple.getTemperatureAverage();
 
     switch (_state)
     {
-    case State::Off:
+    case State::StandBy: // Wait for "Press start"
         setPower(false);
         return;
-        ;
-    case State::On:
+    case State::PID:
+    case State::BangOn:
+    case State::BangOff:
         _myPID.run();
+        // Informative state changes. Logic copied from AutoPID.cpp
+        if (Config::active.pid_bangOn_temp_c && ((_setpoint - _input) > Config::active.pid_bangOn_temp_c))
+            _state = State::BangOn;
+        else if (Config::active.pid_bangOff_temp_c && ((_input - _setpoint) > Config::active.pid_bangOff_temp_c))
+            _state = State::BangOff;
+        else
+            _state = State::PID;
+        break;
+    case State::Start: // Start/Init PID Tuner
+        Serial.println("Copy & Paste to https://pidtuner.com");
+        Serial.println("Time, Input, Output");
+        serialPrintLine();
+        // PID Tuner calculations may fail if not started with 0
+        Serial.print("-10.00, 0, ");
+        Serial.println(_input);
+        Serial.print("-0.01, 0, ");
+        Serial.println(_input);
+
+        _setpoint = _pidTunerTempTarget;
+        _pidTunerStart_ms = now;
+        _pwmWindowStart_ms = now;
+        _state = State::Heating;
+        _output = Config::active.pid_pwm_window_ms;
+        break;
+    case State::Heating:
+        if (_input > _setpoint) // By the use of _input the user may adapt the target during heatup
+        {
+            _pidTunerTempTarget = _setpoint;
+            _setpoint = 0;
+            _output = 0;
+            _pwmWindowStart_ms = now;
+            _pidTunerTempMax = _input; // Useless as it will overshoot in any case?!
+            _state = State::Settle;
+        }
+        break;
+    case State::Settle:
+        if (_input > _pidTunerTempMax) // overshooting
+        {
+            _pidTunerTempMax = _input;
+            break;
+        }
+        // if(_input <= (_pidTunerTempMax - _pidTunerTempNoise - _pidTunerTempSettled)) // Settled
+        if (_input <= _pidTunerTempTarget) // Settled
+        {
+            _state = State::StandBy;
+            _mode = Mode::Manual;
+            serialPrintLine();
+            Serial.print("Done. Overshot (BangON) = ");
+            Serial.println(_pidTunerTempMax - _pidTunerTempTarget);
+        }
         break;
     }
 
-    // Informative state changes. Logic copied from AutoPID.cpp
-    if (Config::active.pid_bangOn_temp_c && ((_setpoint - _input) > Config::active.pid_bangOn_temp_c))
-        _controllerState = ControllerState::bangOn;
-    else if (Config::active.pid_bangOff_temp_c && ((_input - _setpoint) > Config::active.pid_bangOff_temp_c))
-        _controllerState = ControllerState::bangOff;
-    else
-        _controllerState = ControllerState::pid;
-
     // Soft PWM
-    uint32_t now = millis();
     if (now - _pwmWindowStart_ms > Config::active.pid_pwm_window_ms)
     { // time to shift the Relay Window
         _pwmWindowStart_ms += Config::active.pid_pwm_window_ms;
@@ -127,22 +212,21 @@ void Hotplate::loop()
     Serial.print(", Input: ");
     Serial.print(_input);
     Serial.print(", Controller state: ");
-    Serial.print(_controllerState);
+    Serial.print(_state);
     Serial.print(", Output: ");
     Serial.print(_output);
     Serial.print(", SSR: ");
     Serial.println(_power);
 #endif
 
-#ifdef DEBUG_SERIAL_PIDTUNER
-    if (_state == State::On && now >= _pidTunerNext_ms)
+    if (isMode(Mode::PIDTuner) && !isState(State::StandBy) &&
+        now >= _pidTunerOutputNext_ms)
     {
-        _pidTunerNext_ms = now + PID_TUNER_INTERVAL_MS;
-        Serial.print(now);
+        _pidTunerOutputNext_ms = now + PID_TUNER_INTERVAL_MS;
+        Serial.print((float)(now - _pidTunerStart_ms) / 1000);
         Serial.print(", ");
-        Serial.print(_power);
+        Serial.print(_output);
         Serial.print(", ");
         Serial.println(_input);
     }
-#endif
 }
