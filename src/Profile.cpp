@@ -16,29 +16,36 @@
  */
 #include <Arduino.h>
 #include "main.hpp"
-//#include "Profile.hpp"
 #include "config.hpp"
 
-Profile::Profile(uint16_t interval_ms, Thermocouple &TcRef, Hotplate &HotRef) : Runnable(interval_ms),
-                                                                                _TcRef(TcRef),
-                                                                                _HotRef(HotRef)
+Profile::Profile(uint16_t interval_ms) : Runnable(interval_ms)
 {
 }
 
 void Profile::setup() {}
 
-void Profile::startProfile()
+/**
+ * @brief Start profile if not already started
+ * 
+ * @return true if profile got started
+ * @return false if profile is already running
+ */
+bool Profile::startProfile()
 {
-    if(!_profileStart_ms)
+    if (_profileStart_ms) // Profile already running
     {
-        _profileStart_ms = millis();
-        _nextInterval_ms = 0;
+        return false;
     }
+    _profileStart_ms = millis();
+    _nextInterval_ms = 0;
+    hotplate.setState(Hotplate::State::Heating);
+    return true;
 }
 
 void Profile::stopProfile()
 {
     _profileStart_ms = 0;
+    hotplate.setState(Hotplate::State::Idle);
 }
 
 short Profile::getSecondsLeft()
@@ -71,16 +78,16 @@ void Profile::loop()
     }
 
     short nextTemp = getTempTarget();
-    if(!nextTemp)
+    if (!nextTemp)
     {
         return;
     }
     hotplate.setSetpoint(nextTemp);
 }
 
-/*
- * Get profile time/temp target dependent of current time/temp
- * @return -1 in the case where PROFILE_TIME_INTERVAL is not reached or profile ended
+/**
+ * @brief Get profile time/temp target dependent of current time & temp
+ * @return 0 in the case where PROFILE_TIME_INTERVAL is not reached or profile ended
  */
 short Profile::getTempTarget()
 {
@@ -103,6 +110,7 @@ short Profile::getTempTarget()
         Serial.print(", temp_c = ");
         Serial.println(timeTarget.temp_c);
 #endif
+
         if ((now - _profileStart_ms) > (1000UL * timeTarget.time_s) ||
             thermocouple.getTemperatureAverage() > timeTarget.temp_c) // FIXME: This would result in a wrong profile time left display if already hot
         {
@@ -131,8 +139,10 @@ short Profile::getTempTarget()
         Serial.print(", new Setpoint = ");
         Serial.println(nextTemp);
 #endif
+
         return nextTemp;
     }
+
     _profileStart_ms = 0; // Stop looping through profile array
     return 0;             // Profile ended
 }

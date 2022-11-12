@@ -92,7 +92,7 @@ void Hotplate::setSetpoint(uint16_t setpoint)
 
     if (!_setpoint)
     {
-        _mode = Mode::Off;
+        _mode = Mode::Manual;
         _state = State::Idle;
         _myPID.stop();
         _output = 0;
@@ -105,16 +105,32 @@ void Hotplate::setSetpoint(uint16_t setpoint)
         _state = State::PID;
     }
     _myPID.run();
-    //_mode = Mode::On;
     _pwmWindowStart_ms = millis();
 }
 
 /**
- * @brief Update PID controllers PID gains from (probably actualized) config
+ * @brief Update PID controllers PID gains
  */
 void Hotplate::updatePidGains()
 {
     _myPID.setGains(Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd);
+}
+
+/**
+ * @brief Is the current mode/setting a startable process (like PIDTuner or ReflowProfile), and idle (waiting to get started)?
+ *
+ * @return true if there is an idle process
+ * @return false if not
+ */
+bool Hotplate::isIdleProcess()
+{
+    return ((isMode(Mode::PIDTuner) || Config::active.profile != Profile::Profiles::Manual) &&
+            isState(State::Idle));
+}
+
+void serialPrintLine()
+{
+    Serial.println("-------------------");
 }
 
 void Hotplate::loop()
@@ -139,14 +155,48 @@ void Hotplate::loop()
         else
             _state = State::PID;
         break;
-    case State::Start:
+    case State::Start: // Start/Init PID Tuner
         Serial.println("Copy & Paste to https://pidtuner.com");
         Serial.println("Time, Input, Output");
-        Serial.println("-------------------");
+        serialPrintLine();
+        // PID Tuner calculations may fail if not started with 0
+        Serial.print("-10.00, 0, ");
+        Serial.println(_input);
+        Serial.print("-0.01, 0, ");
+        Serial.println(_input);
 
+        _setpoint = _pidTunerTempTarget;
         _pidTunerStart_ms = now;
+        _pwmWindowStart_ms = now;
         _state = State::Heating;
         _output = Config::active.pid_pwm_window_ms;
+        break;
+    case State::Heating:
+        if (_input > _setpoint) // By the use of _input the user may adapt the target during heatup
+        {
+            _pidTunerTempTarget = _setpoint;
+            _setpoint = 0;
+            _output = 0;
+            _pwmWindowStart_ms = now;
+            _pidTunerTempMax = _input; // Useless as it will overshoot in any case?!
+            _state = State::Settle;
+        }
+        break;
+    case State::Settle:
+        if (_input > _pidTunerTempMax) // overshooting
+        {
+            _pidTunerTempMax = _input;
+            break;
+        }
+        // if(_input <= (_pidTunerTempMax - _pidTunerTempNoise - _pidTunerTempSettled)) // Settled
+        if (_input <= _pidTunerTempTarget) // Settled
+        {
+            _state = State::Idle;
+            _mode = Mode::Manual;
+            serialPrintLine();
+            Serial.print("Done. Overshot (BangON) = ");
+            Serial.println(_pidTunerTempMax - _pidTunerTempTarget);
+        }
         break;
     }
 
@@ -170,14 +220,13 @@ void Hotplate::loop()
     Serial.println(_power);
 #endif
 
-    if (_mode == Mode::PIDTuner &&
-        _state != State::Idle &&
+    if (isMode(Mode::PIDTuner) && !isState(State::Idle) &&
         now >= _pidTunerOutputNext_ms)
     {
         _pidTunerOutputNext_ms = now + PID_TUNER_INTERVAL_MS;
         Serial.print((float)(now - _pidTunerStart_ms) / 1000);
         Serial.print(", ");
-        Serial.print(_power);
+        Serial.print(_output);
         Serial.print(", ");
         Serial.println(_input);
     }

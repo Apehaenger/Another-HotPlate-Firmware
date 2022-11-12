@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added 
 
+- Added [PID Tuner](https://pidtuner.com) output
+- Added average temperatures for more stable temperature display/handling 
 - Added Changelog
 
 ### Changed
@@ -19,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed from "pass by pointer" to "pass by reference"
 - Moved profile handling into a separate class
 - Resturctured handling of objects via globals (instead of space wasting pointer/reference parameter)
+- General handling of 
 
 <!-- Further samples:
 

@@ -13,20 +13,34 @@ class Hotplate : public Runnable
     const uint8_t _ssrPin;
 
 public:
+    /*
+     * FIXME: Should switch to "flagged enums" and merge them to State,
+     * but they're tricky/ugly with <= C 11.x
+     */
     enum class Mode : uint8_t
     {
-        Off = 0x0,
-        Manual = 0x1,
-        Profile = 0x2,
-        PIDTuner = 0x4,
+        Manual = 0x0,
+        PIDTuner = 0x1,
     };
 
+    /*
+     * This State enum is for informational (display) AS WELL AS control flow purposes.
+     * It has mixed usage mainly to save some byte.
+     * At the moment there's only the PIDTuner who's using the control flow related items
+     * like (Idle), Start, Heating and Settle and the used names are held to be generic,
+     * so that they can be used also for other (future) control flows.
+     * 
+     * FIXME: Should switch to "flagged enums" and merge also Mode here,
+     * but they're tricky/ugly with <= C 11.x
+     */
     enum class State : uint8_t
     {
+        // Control flow purposes
         Idle = 0x0,    // Waiting for "Press to start" (a flow)
         Start = 0x1,   // Start flow
         Heating = 0x2, // Heat up to to target temp
         Settle = 0x4,  // Wait temp get settled
+        // Informational (display) purposes
         BangOn = 0x8,
         BangOff = 0x10,
         PID = 0x12,
@@ -43,6 +57,7 @@ public:
     uint16_t getSetpoint();
     State getState();
 
+    bool isIdleProcess();
     bool isMode(Mode);
     bool isState(State);
 
@@ -56,14 +71,15 @@ private:
     AutoPID _myPID;
     double _input, _setpoint = 0, _output = 0;
     uint32_t _pwmWindowStart_ms, _pidTunerOutputNext_ms = 0, _pidTunerStart_ms = 0;
-    Mode _mode = Mode::Off;
+    Mode _mode = Mode::Manual;
     State _state = State::Idle;
     bool _power = false;
 
     // FIXME: Should go into setuo?!
-    const uint16_t _pidTunerTargetTemp = 100;
-    const uint8_t _pidTunerTempNoise_c = 2;
-    const uint8_t _pidTunerTempSettled_c = 5;
+    uint16_t _pidTunerTempTarget = 100;
+    const uint8_t _pidTunerTempNoise = 2;
+    const uint8_t _pidTunerTempSettled = 10;
+    uint16_t _pidTunerTempMax;
 
     void setPower(bool);
 };

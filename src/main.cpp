@@ -20,6 +20,12 @@
  *
  * Author: Jörg Ebeling <joerg@ebeling.ws>
  *
+ * TODO:
+ * - Inject an initial wait process instead of the injected -time start.
+ *   This should also make _pidTunerStart_ms obsolete.
+ * - Resturcture Ui class with more cleare methods like pushToStart(), setTitle(),
+ *   so that the display get controlled by the related flow and not visa versa lije now.
+ *
  * Usage:
  *     RAM      |    Flash    | Comment
  * ----------------------------------------------------------------------
@@ -65,7 +71,7 @@ Runnable *Runnable::headRunnable = NULL; // Runnable super-class
 Led hotLed(LED_PIN);
 Thermocouple thermocouple(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
 Hotplate hotplate(PID_SAMPLE_MS, SSR_Pin);
-Profile profile(PROFILE_TIME_INTERVAL_MS, thermocouple, hotplate);
+Profile profile(PROFILE_TIME_INTERVAL_MS);
 Ui ui(INTERVAL_DISP);
 
 // Internal vars
@@ -116,19 +122,24 @@ void loop()
 }
 
 /**
- * @brief Start if a flow like PIDTuner or ReflowProfile is idle (waiting to get started)
+ * @brief Start if a process like PIDTuner or ReflowProfile is idle (waiting to get started)
  *
- * @return true if there was an idle flow, or is a running flow
- * @return false if there isn't a flow
+ * @return true if there was an idle process
+ * @return false if there isn't an idle process
  */
-bool startIdleFlow()
+bool startIfIdleProcess()
 {
-  // Order matters!
-  if ((hotplate.isMode(Hotplate::Mode::Profile) || hotplate.isMode(Hotplate::Mode::PIDTuner)) &&
-      hotplate.isState(Hotplate::State::Idle))
+  if (hotplate.isIdleProcess())
   {
-    hotplate.setState(Hotplate::State::Start);
-    return true;
+    if (hotplate.isMode(Hotplate::Mode::PIDTuner))
+    {
+      hotplate.setState(Hotplate::State::Start);
+      return true;
+    }
+  }
+  if (Config::active.profile != Profile::Profiles::Manual)
+  {
+    return profile.startProfile();
   }
   return false;
 }
@@ -137,7 +148,7 @@ void onPlusPressed()
 {
   if (hotplate.getSetpoint() < Config::active.pid_max_temp_c)
   {
-    startIdleFlow();
+    startIfIdleProcess();
     hotplate.setSetpoint(hotplate.getSetpoint() + 1);
   }
 }
@@ -146,16 +157,16 @@ void onMinusPressed()
 {
   if (hotplate.getSetpoint())
   {
-    startIdleFlow();
+    startIfIdleProcess();
     hotplate.setSetpoint(hotplate.getSetpoint() - 1);
   }
 }
 
 void onPushPressed()
 {
-  if (!startIdleFlow())
+  if (!startIfIdleProcess())
   {
-    hotplate.setMode(Hotplate::Mode::Off);
+    hotplate.setMode(Hotplate::Mode::Manual);
     hotplate.setState(Hotplate::State::Idle);
     profile.stopProfile();
     hotplate.setSetpoint(0);

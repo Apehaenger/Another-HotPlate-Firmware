@@ -62,20 +62,22 @@ void Ui::mainScreen()
         setStdFont();
 
         // 1st row
-        y = 13;
+        y = 9;
         // Mode
         switch (hotplate.getMode())
         {
         case Hotplate::Mode::PIDTuner:
             u8g2.drawStr(0, y, "PID Tuner:");
-            x = 50;
+            x = 71;
             switch (hotplate.getState())
             {
             case Hotplate::State::Heating:
-                u8g2.drawStr(x, y, "Heating ...");
+                u8g2.drawStr(x, y, "Heat...");
                 break;
             case Hotplate::State::Settle:
-                u8g2.drawStr(0, y, "Settling ...");
+                u8g2.drawStr(x, y, "Settle...");
+                break;
+            default:
                 break;
             }
             break;
@@ -85,9 +87,8 @@ void Ui::mainScreen()
         }
 
         // 2nd row
-        y = 27;
-        if (Config::active.profile != Profile::Profiles::Manual &&
-            hotplate.getState() == Hotplate::State::Idle)
+        y = 25; // For two color display need to be >= 25 
+        if (hotplate.isIdleProcess())
         {
             s = "Push to start";
             u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(s.c_str())) / 2, y, s.c_str());
@@ -97,7 +98,7 @@ void Ui::mainScreen()
             // Target temperature
             _lastTarget = hotplate.getSetpoint();
             sprintf(cbuf, "Target: %3d", _lastTarget);
-            u8g2.drawFrame(u8g2.getStrWidth(cbuf) - (3 * 7) - 2, 16, (3 * 7) + 4, 13);
+            //u8g2.drawFrame(u8g2.getStrWidth(cbuf) - (3 * 7) - 3, y - 12, (3 * 7) + 6, 15);
             u8g2.drawStr(0, y, cbuf);
             if (Config::active.profile != Profile::Profiles::Manual)
             {

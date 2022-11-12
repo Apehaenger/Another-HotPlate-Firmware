@@ -4,14 +4,9 @@
 #define PROFILE_TIME_INTERVAL_MS 10000 // Allows a user to adjust the target for the amount of interval
 
 #include "Runnable.hpp"
-#include "Thermocouple.hpp"
-#include "Hotplate.hpp"
 
 class Profile : public Runnable
 {
-    Thermocouple &_TcRef;
-    Hotplate &_HotRef;
-
 public:
     enum Profiles : uint8_t // User selectable reflow profile/mode
     {
@@ -26,13 +21,13 @@ public:
         [Sn965Ag30Cu05] = "Sn96.5/Ag3.0/Cu0.5",
     };
 
-    Profile(uint16_t interval_ms, Thermocouple &, Hotplate &);
+    Profile(uint16_t interval_ms);
     void setup() override;
     void loop() override;
 
     short getSecondsLeft();
 
-    void startProfile();
+    bool startProfile();
     void stopProfile();
 
 private:
