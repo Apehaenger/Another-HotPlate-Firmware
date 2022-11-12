@@ -23,6 +23,7 @@
  * TODO:
  * - Inject an initial wait process instead of the injected -time start.
  *   This should also make _pidTunerStart_ms obsolete.
+ * - Ui should be split up into Ui and Display. The button logic from main should go then into Ui
  * - Resturcture Ui class with more cleare methods like pushToStart(), setTitle(),
  *   so that the display get controlled by the related flow and not visa versa lije now.
  * - Redraw only the relevant stuff
@@ -53,6 +54,7 @@
  * 63.3%  1297    86.4% 26544   Optimized Hotplate
  * 63.9%  1309    86.2% 26482   Separated profile handling into separate class and switched to global class pointer
  * 72.8%  1490    89.5% 27492   Added/activated Serial for PID Tuner. It's going to become narrow...
+ * 81.1%  1660    95.8% 29416   PID Tuner and final corrections. Everything looks fine.
  */
 #include <Arduino.h>
 #include "main.hpp"
