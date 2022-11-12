@@ -26,7 +26,7 @@ void Profile::setup() {}
 
 /**
  * @brief Start profile if not already started
- * 
+ *
  * @return true if profile got started
  * @return false if profile is already running
  */
@@ -38,14 +38,25 @@ bool Profile::startProfile()
     }
     _profileStart_ms = millis();
     _nextInterval_ms = 0;
-    hotplate.setState(Hotplate::State::Heating);
+    hotplate.setState(Hotplate::State::PID);
     return true;
 }
 
 void Profile::stopProfile()
 {
     _profileStart_ms = 0;
-    hotplate.setState(Hotplate::State::Idle);
+    hotplate.setState(Hotplate::State::StandBy);
+}
+
+/**
+ * @brief Is the current profile != Manual profile, and idle (waiting to get started)?
+ *
+ * @return true if the current profile is != Manual and stand-by (not started)
+ * @return false if not
+ */
+bool Profile::isStandBy()
+{
+    return (Config::active.profile != Profile::Profiles::Manual && !_profileStart_ms);
 }
 
 short Profile::getSecondsLeft()
@@ -71,8 +82,7 @@ short Profile::getSecondsLeft()
 
 void Profile::loop()
 {
-    if (Config::active.profile == Profile::Profiles::Manual ||
-        !_profileStart_ms)
+    if (Config::active.profile == Profile::Profiles::Manual || !_profileStart_ms) // Not the same as: isStandBy()
     {
         return;
     }
@@ -82,6 +92,7 @@ void Profile::loop()
     {
         return;
     }
+
     hotplate.setSetpoint(nextTemp);
 }
 
@@ -89,11 +100,10 @@ void Profile::loop()
  * @brief Get profile time/temp target dependent of current time & temp
  * @return 0 in the case where PROFILE_TIME_INTERVAL is not reached or profile ended
  */
-short Profile::getTempTarget()
+uint16_t Profile::getTempTarget()
 {
     uint32_t now = millis();
-    short nextTemp;
-
+    uint16_t nextTemp;
     ProfileTimeTarget timeTarget;
 
     for (uint8_t i = 0; i < _profile2timeTargets[Config::active.profile]->length; i++)
@@ -143,6 +153,5 @@ short Profile::getTempTarget()
         return nextTemp;
     }
 
-    _profileStart_ms = 0; // Stop looping through profile array
-    return 0;             // Profile ended
+    return 0; // Profile ended
 }

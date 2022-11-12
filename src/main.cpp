@@ -25,6 +25,8 @@
  *   This should also make _pidTunerStart_ms obsolete.
  * - Resturcture Ui class with more cleare methods like pushToStart(), setTitle(),
  *   so that the display get controlled by the related flow and not visa versa lije now.
+ * - Redraw only the relevant stuff
+ * - Will profile timing in ms instead of s save mem and flash?
  *
  * Usage:
  *     RAM      |    Flash    | Comment
@@ -127,17 +129,14 @@ void loop()
  * @return true if there was an idle process
  * @return false if there isn't an idle process
  */
-bool startIfIdleProcess()
+bool startIfStandByProcess()
 {
-  if (hotplate.isIdleProcess())
+  if (hotplate.isStandBy())
   {
-    if (hotplate.isMode(Hotplate::Mode::PIDTuner))
-    {
       hotplate.setState(Hotplate::State::Start);
       return true;
-    }
   }
-  if (Config::active.profile != Profile::Profiles::Manual)
+  if (profile.isStandBy())
   {
     return profile.startProfile();
   }
@@ -148,7 +147,7 @@ void onPlusPressed()
 {
   if (hotplate.getSetpoint() < Config::active.pid_max_temp_c)
   {
-    startIfIdleProcess();
+    startIfStandByProcess();
     hotplate.setSetpoint(hotplate.getSetpoint() + 1);
   }
 }
@@ -157,17 +156,17 @@ void onMinusPressed()
 {
   if (hotplate.getSetpoint())
   {
-    startIfIdleProcess();
+    startIfStandByProcess();
     hotplate.setSetpoint(hotplate.getSetpoint() - 1);
   }
 }
 
 void onPushPressed()
 {
-  if (!startIfIdleProcess())
+  if (!startIfStandByProcess())
   {
     hotplate.setMode(Hotplate::Mode::Manual);
-    hotplate.setState(Hotplate::State::Idle);
+    hotplate.setState(Hotplate::State::StandBy);
     profile.stopProfile();
     hotplate.setSetpoint(0);
   }

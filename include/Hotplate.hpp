@@ -27,7 +27,7 @@ public:
      * This State enum is for informational (display) AS WELL AS control flow purposes.
      * It has mixed usage mainly to save some byte.
      * At the moment there's only the PIDTuner who's using the control flow related items
-     * like (Idle), Start, Heating and Settle and the used names are held to be generic,
+     * like (StandBy), Start, Heating and Settle and the used names are held to be generic,
      * so that they can be used also for other (future) control flows.
      * 
      * FIXME: Should switch to "flagged enums" and merge also Mode here,
@@ -36,7 +36,7 @@ public:
     enum class State : uint8_t
     {
         // Control flow purposes
-        Idle = 0x0,    // Waiting for "Press to start" (a flow)
+        StandBy = 0x0, // Waiting for "Press to start" (a process flow)
         Start = 0x1,   // Start flow
         Heating = 0x2, // Heat up to to target temp
         Settle = 0x4,  // Wait temp get settled
@@ -57,7 +57,7 @@ public:
     uint16_t getSetpoint();
     State getState();
 
-    bool isIdleProcess();
+    bool isStandBy();
     bool isMode(Mode);
     bool isState(State);
 
@@ -72,7 +72,7 @@ private:
     double _input, _setpoint = 0, _output = 0;
     uint32_t _pwmWindowStart_ms, _pidTunerOutputNext_ms = 0, _pidTunerStart_ms = 0;
     Mode _mode = Mode::Manual;
-    State _state = State::Idle;
+    State _state = State::StandBy;
     bool _power = false;
 
     // FIXME: Should go into setuo?!

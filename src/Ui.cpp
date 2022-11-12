@@ -88,7 +88,7 @@ void Ui::mainScreen()
 
         // 2nd row
         y = 25; // For two color display need to be >= 25 
-        if (hotplate.isIdleProcess())
+        if (hotplate.isStandBy() || profile.isStandBy())
         {
             s = "Push to start";
             u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(s.c_str())) / 2, y, s.c_str());

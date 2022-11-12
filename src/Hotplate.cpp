@@ -93,14 +93,14 @@ void Hotplate::setSetpoint(uint16_t setpoint)
     if (!_setpoint)
     {
         _mode = Mode::Manual;
-        _state = State::Idle;
+        _state = State::StandBy;
         _myPID.stop();
         _output = 0;
         setPower(false); // Don't wait for the next loop()
         return;
     }
 
-    if (_state == State::Idle)
+    if (_state == State::StandBy)
     {
         _state = State::PID;
     }
@@ -117,15 +117,14 @@ void Hotplate::updatePidGains()
 }
 
 /**
- * @brief Is the current mode/setting a startable process (like PIDTuner or ReflowProfile), and idle (waiting to get started)?
+ * @brief Is the current mode & state a startable process (like PIDTuner), and stand-by (waiting to get started)?
  *
  * @return true if there is an idle process
  * @return false if not
  */
-bool Hotplate::isIdleProcess()
+bool Hotplate::isStandBy()
 {
-    return ((isMode(Mode::PIDTuner) || Config::active.profile != Profile::Profiles::Manual) &&
-            isState(State::Idle));
+    return (isMode(Mode::PIDTuner) && isState(State::StandBy));
 }
 
 void serialPrintLine()
@@ -140,7 +139,7 @@ void Hotplate::loop()
 
     switch (_state)
     {
-    case State::Idle: // Wait for "Press start"
+    case State::StandBy: // Wait for "Press start"
         setPower(false);
         return;
     case State::PID:
@@ -191,7 +190,7 @@ void Hotplate::loop()
         // if(_input <= (_pidTunerTempMax - _pidTunerTempNoise - _pidTunerTempSettled)) // Settled
         if (_input <= _pidTunerTempTarget) // Settled
         {
-            _state = State::Idle;
+            _state = State::StandBy;
             _mode = Mode::Manual;
             serialPrintLine();
             Serial.print("Done. Overshot (BangON) = ");
@@ -220,7 +219,7 @@ void Hotplate::loop()
     Serial.println(_power);
 #endif
 
-    if (isMode(Mode::PIDTuner) && !isState(State::Idle) &&
+    if (isMode(Mode::PIDTuner) && !isState(State::StandBy) &&
         now >= _pidTunerOutputNext_ms)
     {
         _pidTunerOutputNext_ms = now + PID_TUNER_INTERVAL_MS;

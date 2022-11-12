@@ -27,6 +27,8 @@ public:
 
     short getSecondsLeft();
 
+    bool isStandBy();
+
     bool startProfile();
     void stopProfile();
 
@@ -55,7 +57,7 @@ private:
 
     uint32_t _profileStart_ms = 0;
 
-    short getTempTarget();
+    uint16_t getTempTarget();
 };
 
 #endif
