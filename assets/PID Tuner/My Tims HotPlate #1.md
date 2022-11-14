@@ -262,9 +262,9 @@ Result = 10-20 Overshot at temps > 60°C
 
 Adapted Model with:
 
-- Reduced gain with minimal overshot
-- Without Derivate to workaround possible AutoPID derivate calculation bug
+- Reduced gain with less overshot
 
-Kp = 21, Ki = 0.1, Kd = 0
+Kp = 32, Ki = 0.2, Kd = 283
+
 
 Result = Much better, still some overshot around 10°C, but slighly slow

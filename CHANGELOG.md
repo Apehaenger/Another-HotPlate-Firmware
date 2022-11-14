@@ -24,11 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - General handling of 
 - Changed initial PID-Tuner wait time and saved some resources
 
-<!-- Further samples:
-
 ### Fixed
 
-- Fixed ...
+- Fixed possibliy wrong PID derivate calculation as discussed [here](https://github.com/r-downing/AutoPID/issues/4)
+
+<!-- Further samples:
+
 
 ### Removed
 

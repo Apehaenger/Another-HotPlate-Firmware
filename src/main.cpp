@@ -38,6 +38,7 @@
  * 81.1%  1660    95.8% 29416   PID Tuner and final corrections. Everything looks fine
  * 79.9%  1636    95.4% 29316   Simplifid initial PID-Tuner wait time
  * 79.9%  1636    95.3% 29282   Optimized profile time calculations
+ * 79.9%  1636    95.3% 29282   Patched AutoPID derivate calculation
  */
 #include <Arduino.h>
 #include "main.hpp"
