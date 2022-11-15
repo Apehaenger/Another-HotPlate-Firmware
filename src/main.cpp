@@ -39,6 +39,7 @@
  * 79.9%  1636    95.4% 29316   Simplifid initial PID-Tuner wait time
  * 79.9%  1636    95.3% 29282   Optimized profile time calculations
  * 79.9%  1636    95.3% 29282   Patched AutoPID derivate calculation
+ * 79.2%  1622    94.9% 29144   Hotplate not an sub-class of Runnable anymore = - 14 byte RAM, -138 byte flash
  */
 #include <Arduino.h>
 #include "main.hpp"
@@ -58,7 +59,7 @@
 Runnable *Runnable::headRunnable = NULL; // Runnable super-class
 Led hotLed(LED_PIN);
 Thermocouple thermocouple(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
-Hotplate hotplate(PID_SAMPLE_MS, SSR_Pin);
+Hotplate hotplate(SSR_Pin);
 Profile profile(PROFILE_TIME_INTERVAL_MS);
 Ui ui(INTERVAL_DISP);
 
@@ -80,6 +81,7 @@ void setup()
   Config::load();
 
   Runnable::setupAll();
+  hotplate.setup();
 
   // FIXME JE: Check/Test if the internal pull up would save the external soldered ones
   pinMode(ROTARY_A_PIN, INPUT_PULLUP); // Arduino Analog input 0 (PCINT8), input and set pull up resistor:
@@ -106,6 +108,7 @@ void setup()
 void loop()
 {
   Runnable::loopAll();
+  hotplate.loop();
   hotLed.blinkByTemp(thermocouple.getTemperatureAverage());
 }
 

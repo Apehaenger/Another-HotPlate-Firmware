@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resturctured handling of objects via globals (instead of space wasting pointer/reference parameter)
 - General handling of 
 - Changed initial PID-Tuner wait time and saved some resources
+- Removed Runnable super-class and save approx. 
+- Cleaned up Hotplate & Ui cpp/h files
 
 ### Fixed
 

@@ -18,11 +18,10 @@
 #include "main.hpp"
 #include "config.hpp"
 
-Hotplate::Hotplate(uint16_t interval_ms, uint8_t ssr_pin) : Runnable(interval_ms),
-                                                            _ssrPin(ssr_pin),
-                                                            _myPID(&_input, &_setpoint, &_output,
-                                                                   0, Config::active.pid_pwm_window_ms,
-                                                                   Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
+Hotplate::Hotplate(uint8_t ssr_pin) : _ssrPin(ssr_pin),
+                                      _myPID(&_input, &_setpoint, &_output,
+                                             0, Config::active.pid_pwm_window_ms,
+                                             Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
 {
 }
 
@@ -33,51 +32,6 @@ void Hotplate::setup()
 
     _myPID.setBangBang(Config::active.pid_bangOn_temp_c, Config::active.pid_bangOff_temp_c);
     _myPID.setTimeStep(PID_SAMPLE_MS); // time interval at which PID calculations are allowed to run in milliseconds
-}
-
-Hotplate::Mode Hotplate::getMode()
-{
-    return _mode;
-}
-
-bool Hotplate::isMode(Mode mode)
-{
-    return _mode == mode;
-}
-
-void Hotplate::setMode(Mode mode)
-{
-    _mode = mode;
-}
-
-Hotplate::State Hotplate::getState()
-{
-    return _state;
-}
-
-bool Hotplate::isState(State state)
-{
-    return _state == state;
-}
-
-void Hotplate::setState(State state)
-{
-    _state = state;
-}
-
-uint16_t Hotplate::getOutput()
-{
-    return _output;
-}
-
-bool Hotplate::getPower()
-{
-    return _power;
-}
-
-uint16_t Hotplate::getSetpoint()
-{
-    return _setpoint;
 }
 
 void Hotplate::setPower(bool pow)
@@ -121,17 +75,6 @@ bool Hotplate::pwmWindowReached()
     return (millis() - _pwmWindowStart_ms > Config::active.pid_pwm_window_ms);
 }
 
-/**
- * @brief Is the current mode & state a startable process (like PIDTuner), and stand-by (waiting to get started)?
- *
- * @return true if there is an idle process
- * @return false if not
- */
-bool Hotplate::isStandBy()
-{
-    return (isMode(Mode::PIDTuner) && isState(State::StandBy));
-}
-
 void serialPrintLine()
 {
     Serial.println("-------------------");
@@ -140,6 +83,12 @@ void serialPrintLine()
 void Hotplate::loop()
 {
     uint32_t now = millis();
+    if (now < _nextInterval_ms)
+    {
+        return;
+    }
+    _nextInterval_ms = now + PID_SAMPLE_MS;
+
     _input = thermocouple.getTemperatureAverage();
 
     switch (_state)
