@@ -5,24 +5,27 @@
 #include <U8g2lib.h>
 #include "Hotplate.hpp"
 
-class Ui : public Runnable
+#define INTERVAL_DISP 100 // (max) Display refresh rate (if dirty)
+
+class Ui
 {
 public:
-    enum uiMode
+    enum Mode
     {
         Main,
         Setup
     };
 
-    Ui(uint16_t interval_ms);
-    void setup() override;
-    void loop() override;
-    void changeUiMode(uiMode nextUi);
+    Ui();
+    void setup();
+    void loop();
+    void changeMode(Mode nextMode) { _mode = nextMode; };
 
 private:
     U8G2_SSD1306_128X64_NONAME_1_HW_I2C u8g2;
-    uiMode uiM = uiMode::Main;
+    Mode _mode = Mode::Main;
 
+    uint32_t _nextInterval_ms = 0;
     uint16_t _lastTarget;
     bool _lastPower;
     float _lastTemp;

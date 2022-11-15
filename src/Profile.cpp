@@ -18,11 +18,9 @@
 #include "main.hpp"
 #include "config.hpp"
 
-Profile::Profile(uint16_t interval_ms) : Runnable(interval_ms)
+Profile::Profile()
 {
 }
-
-void Profile::setup() {}
 
 /**
  * @brief Start profile if not already started
@@ -82,6 +80,13 @@ short Profile::getSecondsLeft()
 
 void Profile::loop()
 {
+    uint32_t now = millis();
+    if (now < _nextInterval_ms)
+    {
+        return;
+    }
+    _nextInterval_ms = now + PROFILE_TIME_INTERVAL_MS;
+
     if (Config::active.profile == Profile::Profiles::Manual || !_profileStart_ms) // Not the same as: isStandBy()
     {
         return;
@@ -107,7 +112,7 @@ uint16_t Profile::getTempTarget()
     ProfileTimeTarget timeTarget;
     uint32_t targetTime_ms;
 
-        for (uint8_t i = 0; i < _profile2timeTargets[Config::active.profile]->length; i++)
+    for (uint8_t i = 0; i < _profile2timeTargets[Config::active.profile]->length; i++)
     {
         timeTarget = _profile2timeTargets[Config::active.profile]->timeTargets[i]; // Make code more readable
 

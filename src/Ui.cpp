@@ -27,8 +27,7 @@
  *   48 pixel i.e. blue
  */
 
-Ui::Ui(uint16_t interval_ms) : Runnable(interval_ms),
-                               u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE)
+Ui::Ui() : u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE)
 {
 }
 
@@ -87,7 +86,7 @@ void Ui::mainScreen()
         }
 
         // 2nd row
-        y = 25; // For two color display need to be >= 25 
+        y = 25; // For two color display need to be >= 25
         if (hotplate.isStandBy() || (!hotplate.isMode(Hotplate::Mode::PIDTuner) && profile.isStandBy()))
         {
             s = "Push to start";
@@ -98,7 +97,7 @@ void Ui::mainScreen()
             // Target temperature
             _lastTarget = hotplate.getSetpoint();
             sprintf(cbuf, "Target: %3d", _lastTarget);
-            //u8g2.drawFrame(u8g2.getStrWidth(cbuf) - (3 * 7) - 3, y - 12, (3 * 7) + 6, 15);
+            // u8g2.drawFrame(u8g2.getStrWidth(cbuf) - (3 * 7) - 3, y - 12, (3 * 7) + 6, 15);
             u8g2.drawStr(0, y, cbuf);
             if (Config::active.profile != Profile::Profiles::Manual && !hotplate.isMode(Hotplate::Mode::PIDTuner))
             {
@@ -155,11 +154,6 @@ void Ui::mainScreen()
         }
 
     } while (u8g2.nextPage());
-}
-
-void Ui::changeUiMode(uiMode nextUi)
-{
-    uiM = nextUi;
 }
 
 void Ui::userInterfaceInputDouble(const char *title, const char *pre, double *value, uint8_t numInt, uint8_t numDec, const char *post)
@@ -338,26 +332,33 @@ void Ui::setupScreen()
             break;
         case 6: // PID Tuner
             hotplate.setMode(Hotplate::Mode::PIDTuner);
-            changeUiMode(uiMode::Main);
+            changeMode(Mode::Main);
             break;
         case 7: // Load saved
             Config::load();
             break;
         case 8: // Save & Quit
             Config::save();
-            changeUiMode(uiMode::Main);
+            changeMode(Mode::Main);
             break;
         default:
-            changeUiMode(uiMode::Main);
+            changeMode(Mode::Main);
         }
     } while (u8g2.nextPage());
 }
 
 void Ui::loop()
 {
-    switch (uiM)
+    uint32_t now = millis();
+    if (now < _nextInterval_ms)
     {
-    case uiMode::Setup:
+        return;
+    }
+    _nextInterval_ms = now + INTERVAL_DISP;
+
+    switch (_mode)
+    {
+    case Mode::Setup:
         setupScreen();
         /*
                         // Double -> String

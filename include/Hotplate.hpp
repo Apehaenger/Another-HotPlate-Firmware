@@ -4,7 +4,6 @@
 #define PID_TUNER_INTERVAL_MS 500 // How often Serial.print values for PID Tuner
 
 #include <AutoPID.h>
-#include "Runnable.hpp"
 
 #define PID_SAMPLE_MS 200 // Should be the shortest PTC-on time, but not shorter than a typical inrush-current period of a PTC (approx. 0.1s)
 

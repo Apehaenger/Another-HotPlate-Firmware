@@ -34,8 +34,7 @@
 #define LONG_PRESS_TIME_MS 500 // Long-Press if larger
 
 // Internal
-#define VERSION_TEXT "0.4.1b"
-#define INTERVAL_DISP 100 // (max) Display refresh rate (if dirty)
+#define VERSION_TEXT "0.5.0b"
 
 extern Ui ui;
 extern Thermocouple thermocouple;

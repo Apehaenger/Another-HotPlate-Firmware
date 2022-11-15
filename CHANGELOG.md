@@ -16,15 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Improved some internal var names
-- Implemeted "Runnable" super-class
 - Optimized Thermocouple class and implemented average temperature
-- Changed from "pass by pointer" to "pass by reference"
 - Moved profile handling into a separate class
 - Resturctured handling of objects via globals (instead of space wasting pointer/reference parameter)
-- General handling of 
 - Changed initial PID-Tuner wait time and saved some resources
-- Removed Runnable super-class and save approx. 
-- Cleaned up Hotplate & Ui cpp/h files
 
 ### Fixed
 

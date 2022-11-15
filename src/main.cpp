@@ -40,6 +40,7 @@
  * 79.9%  1636    95.3% 29282   Optimized profile time calculations
  * 79.9%  1636    95.3% 29282   Patched AutoPID derivate calculation
  * 79.2%  1622    94.9% 29144   Hotplate not an sub-class of Runnable anymore = - 14 byte RAM, -138 byte flash
+ * 77.7%  1592    91.4% 28090   Removed Runnable super-class and saved 44 byte RAM, 1192 byte Flash
  */
 #include <Arduino.h>
 #include "main.hpp"
@@ -56,12 +57,11 @@
 #endif
 
 // Init classes
-Runnable *Runnable::headRunnable = NULL; // Runnable super-class
 Led hotLed(LED_PIN);
 Thermocouple thermocouple(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
 Hotplate hotplate(SSR_Pin);
-Profile profile(PROFILE_TIME_INTERVAL_MS);
-Ui ui(INTERVAL_DISP);
+Profile profile;
+Ui ui;
 
 // Internal vars
 volatile byte rotary_aValPrev = 0;             // Rotary A, last level, see ISR(PCINT1_vect)
@@ -79,8 +79,7 @@ void setup()
 #endif
 
   Config::load();
-
-  Runnable::setupAll();
+  ui.setup();
   hotplate.setup();
 
   // FIXME JE: Check/Test if the internal pull up would save the external soldered ones
@@ -107,8 +106,9 @@ void setup()
 
 void loop()
 {
-  Runnable::loopAll();
+  profile.loop();
   hotplate.loop();
+  ui.loop();
   hotLed.blinkByTemp(thermocouple.getTemperatureAverage());
 }
 
@@ -163,7 +163,7 @@ void onPushPressed()
 
 void onPushLongPressed()
 {
-  ui.changeUiMode(Ui::uiMode::Setup);
+  ui.changeMode(Ui::Mode::Setup);
 }
 
 ISR(PCINT1_vect)
