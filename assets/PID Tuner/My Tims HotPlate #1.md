@@ -266,5 +266,9 @@ Adapted Model with:
 
 Kp = 32, Ki = 0.2, Kd = 283
 
+Adapter Model with Kd < 1000:
+
+Kp = 121, Ki = 2.6, Kd = 930
+
 
 Result = Much better, still some overshot around 10°C, but slighly slow
