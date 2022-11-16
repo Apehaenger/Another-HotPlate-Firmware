@@ -41,6 +41,10 @@
  * 79.2%  1622    94.9% 29144   Hotplate not an sub-class of Runnable anymore = - 14 byte RAM, -138 byte flash
  * 77.7%  1592    91.4% 28090   Removed Runnable super-class and saved 44 byte RAM, 1192 byte Flash
  * 77.4%  1585    90.9% 27924   MainScreen via CRC instead of single values
+ * 77.8%  1593    91.0% 27942   Added missing "wait..." string
+ * 77.8%  1593    90.9% 27930   str -> char*
+ * 78.1%  1599    90.2% 27722   str -> sprintf
+ * 78.1%  1599    90.0% 27636   Fixed double/wrong °C
  */
 #include <Arduino.h>
 #include "main.hpp"

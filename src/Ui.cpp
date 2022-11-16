@@ -57,8 +57,8 @@ void Ui::displayMainScreen()
     }
     _lastMainScreenCrc = mainScreenCrc;
 
-    char cbuf[12]; // Longest entry length = "Target: 123\0"
-    String s = "";
+    char cbuf[14]; // Longest entry length = "PID ????/5000\0", before "Target: 123\0"
+    String s;
     u8g2_uint_t x, y;
 
     u8g2.firstPage();
@@ -77,6 +77,9 @@ void Ui::displayMainScreen()
             x = 71;
             switch (hotplate.getState())
             {
+            case Hotplate::State::Wait:
+                u8g2.drawStr(x, y, "Wait...");
+                break;
             case Hotplate::State::Heat:
                 u8g2.drawStr(x, y, "Heat...");
                 break;
@@ -96,8 +99,8 @@ void Ui::displayMainScreen()
         y = 25; // For two color display need to be >= 25
         if (hotplate.isStandBy() || (!hotplate.isMode(Hotplate::Mode::PIDTuner) && profile.isStandBy()))
         {
-            s = "Push to start";
-            u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(s.c_str())) / 2, y, s.c_str());
+            const char *cp = "Push to start";
+            u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(cp)) / 2, y, cp);
         }
         else
         {
@@ -116,19 +119,16 @@ void Ui::displayMainScreen()
         switch (hotplate.getState())
         {
         case Hotplate::State::BangOn:
-            s = "BangON";
+            strcpy(cbuf, "BangON");
             u8g2.setFontMode(0);
             u8g2.setDrawColor(1);
-            u8g2.drawBox(0, 29, u8g2.getStrWidth(s.c_str()) + 2, 13);
+            u8g2.drawBox(0, 29, u8g2.getStrWidth(cbuf) + 2, 13);
             u8g2.setDrawColor(0);
-            u8g2.drawStr(1, 40, s.c_str());
+            u8g2.drawStr(1, 40, cbuf);
             break;
         case Hotplate::State::PID:
-            s = "PID ";
-            s += hotplate.getOutput();
-            s += "/";
-            s += Config::active.pid_pwm_window_ms;
-            u8g2.drawStr(1, 40, s.c_str());
+            sprintf(cbuf, "PID %4d/%4d", hotplate.getOutput(), Config::active.pid_pwm_window_ms);
+            u8g2.drawStr(1, 40, cbuf);
             break;
         case Hotplate::State::BangOff:
             u8g2.drawStr(1, 40, "BangOFF");
@@ -146,9 +146,7 @@ void Ui::displayMainScreen()
 
         // Temperature
         dtostrf(thermocouple.getTemperatureAverage(), 5, 1, cbuf);
-        s = String(cbuf);
-        s.concat(" °C");
-        u8g2.drawUTF8(35, 64, s.c_str());
+        u8g2.drawUTF8(35, 64, cbuf);
 
         // SSR Power
         if (hotplate.getPower())
