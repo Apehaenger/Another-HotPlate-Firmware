@@ -7,6 +7,7 @@
 #include "Profile.hpp"
 
 //#define DEBUG_SERIAL
+//#define DEBUG_UI_SERIAL
 
 // Thermocouple (MAX6675) pins
 #define TC_DO_PIN 6

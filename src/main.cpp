@@ -24,7 +24,6 @@
  * - Ui should be split up into Ui and Display. The button logic from main should go then into Ui
  * - Resturcture Ui class with more cleare methods like pushToStart(), setTitle(),
  *   so that the display get controlled by the related flow and not visa versa lije now.
- * - Redraw only the relevant stuff
  *
  * Usage:
  *     RAM      |    Flash    | Comment
@@ -41,6 +40,7 @@
  * 79.9%  1636    95.3% 29282   Patched AutoPID derivate calculation
  * 79.2%  1622    94.9% 29144   Hotplate not an sub-class of Runnable anymore = - 14 byte RAM, -138 byte flash
  * 77.7%  1592    91.4% 28090   Removed Runnable super-class and saved 44 byte RAM, 1192 byte Flash
+ * 77.4%  1585    90.9% 27924   MainScreen via CRC instead of single values
  */
 #include <Arduino.h>
 #include "main.hpp"

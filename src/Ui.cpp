@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include "CRC32.h"
 #include "main.hpp"
 #include "config.hpp"
 #include "../assets/fonts/my_u8g2_font_7x13B.hpp"
@@ -26,10 +27,7 @@
  *    1 non-counted empty pixel row
  *   48 pixel i.e. blue
  */
-
-Ui::Ui() : u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE)
-{
-}
+Ui::Ui() : u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE) {}
 
 void Ui::setup()
 {
@@ -37,18 +35,27 @@ void Ui::setup()
     u8g2.clear();
 }
 
-void Ui::mainScreen()
+void Ui::displayMainScreen()
 {
+    // CRC32 of main screen relevant values
+    // Do it via struct and a single crc.calculate() call instead of multiple crc.update() calls which would be more expensive!
+    MainScreenCrcData crcData = {hotplate.getMode(), hotplate.getPower(), hotplate.getSetpoint(), hotplate.getState(),
+                                 profile.getSecondsLeft(), thermocouple.getTemperatureAverage()};
+    uint32_t mainScreenCrc = CRC32::calculate((uint8_t *)&crcData, sizeof(crcData));
+
+#ifdef DEBUG_UI_SERIAL
+    Serial.print("mainScreenCrc: ");
+    Serial.print(mainScreenCrc, HEX);
+    Serial.print(", _lastMainScreenCrc: ");
+    Serial.println(_lastMainScreenCrc, HEX);
+#endif
+
     // Check if we need to make the expensive display redraw
-    if (thermocouple.getTemperatureAverage() == _lastTemp &&
-        hotplate.getSetpoint() == _lastTarget &&
-        hotplate.getPower() == _lastPower &&
-        profile.getSecondsLeft() == _lastProfileSecondLeft &&
-        hotplate.getState() == _lastState &&
-        hotplate.getMode() == _lastMode)
+    if (mainScreenCrc == _lastMainScreenCrc)
     {
         return;
     }
+    _lastMainScreenCrc = mainScreenCrc;
 
     char cbuf[12]; // Longest entry length = "Target: 123\0"
     String s = "";
@@ -95,8 +102,7 @@ void Ui::mainScreen()
         else
         {
             // Target temperature
-            _lastTarget = hotplate.getSetpoint();
-            sprintf(cbuf, "Target: %3d", _lastTarget);
+            sprintf(cbuf, "Target: %3d", hotplate.getSetpoint());
             // u8g2.drawFrame(u8g2.getStrWidth(cbuf) - (3 * 7) - 3, y - 12, (3 * 7) + 6, 15);
             u8g2.drawStr(0, y, cbuf);
             if (Config::active.profile != Profile::Profiles::Manual && !hotplate.isMode(Hotplate::Mode::PIDTuner))
@@ -143,11 +149,9 @@ void Ui::mainScreen()
         s = String(cbuf);
         s.concat(" °C");
         u8g2.drawUTF8(35, 64, s.c_str());
-        _lastTemp = thermocouple.getTemperatureAverage();
 
         // SSR Power
-        _lastPower = hotplate.getPower();
-        if (_lastPower)
+        if (hotplate.getPower())
         {
             u8g2.setFont(my_u8g2_font_open_iconic_embedded_2x);
             u8g2.drawStr(5, 62, "C"); // Power symbol = 67 = C
@@ -292,7 +296,7 @@ void Ui::inputReflowProfile()
     } while (u8g2.nextPage());
 }
 
-void Ui::setupScreen()
+void Ui::displaySetupScreen()
 {
     u8g2.firstPage();
     do
@@ -359,7 +363,7 @@ void Ui::loop()
     switch (_mode)
     {
     case Mode::Setup:
-        setupScreen();
+        displaySetupScreen();
         /*
                         // Double -> String
                         char cbuf[10];
@@ -377,6 +381,6 @@ void Ui::loop()
         */
         break;
     default:
-        mainScreen();
+        displayMainScreen();
     }
 }
