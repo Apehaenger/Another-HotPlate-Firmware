@@ -21,9 +21,7 @@
  * Author: Jörg Ebeling <joerg@ebeling.ws>
  *
  * TODO:
- * - Ui should be split up into Ui and Display. The button logic from main should go then into Ui
- * - Resturcture Ui class with more cleare methods like pushToStart(), setTitle(),
- *   so that the display get controlled by the related flow and not visa versa lije now.
+ * - Test PIDTuner and place into config defaults
  *
  * Usage:
  *     RAM      |    Flash    | Comment
@@ -45,6 +43,7 @@
  * 77.8%  1593    90.9% 27930   str -> char*
  * 78.1%  1599    90.2% 27722   str -> sprintf
  * 78.1%  1599    90.0% 27636   Fixed double/wrong °C
+ * 78.1%  1599    89.9% 27626   Further Ui optimization and enlarged PID values
  */
 #include <Arduino.h>
 #include "main.hpp"

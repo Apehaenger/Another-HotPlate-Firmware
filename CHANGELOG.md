@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Enlarged PID constant length from 3 to 4 int digits
 - Improved some internal var names
 - Optimized Thermocouple class and implemented average temperature
 - Moved profile handling into a separate class

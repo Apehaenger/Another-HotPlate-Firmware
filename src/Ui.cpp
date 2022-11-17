@@ -115,7 +115,9 @@ void Ui::displayMainScreen()
             }
         }
 
-        // Controller state
+        // Row 3 = Controller state
+        x = 1;
+        y = 40;
         switch (hotplate.getState())
         {
         case Hotplate::State::BangOn:
@@ -124,14 +126,14 @@ void Ui::displayMainScreen()
             u8g2.setDrawColor(1);
             u8g2.drawBox(0, 29, u8g2.getStrWidth(cbuf) + 2, 13);
             u8g2.setDrawColor(0);
-            u8g2.drawStr(1, 40, cbuf);
+            u8g2.drawStr(x, y, cbuf);
             break;
         case Hotplate::State::PID:
             sprintf(cbuf, "PID %4d/%4d", hotplate.getOutput(), Config::active.pid_pwm_window_ms);
-            u8g2.drawStr(1, 40, cbuf);
+            u8g2.drawStr(x, y, cbuf);
             break;
         case Hotplate::State::BangOff:
-            u8g2.drawStr(1, 40, "BangOFF");
+            u8g2.drawStr(x, y, "BangOFF");
             break;
         default:
             break;
@@ -177,6 +179,7 @@ void Ui::userInterfaceInputDouble(const char *title, const char *pre, double *va
     {
         dtostrf(*value, numInt + numDec + 1, numDec, cbuf);
         valueStr = String(cbuf);
+        valueStr.replace(' ', '0');
     }
 
     // Serial.print("valueStr: ");
@@ -187,9 +190,6 @@ void Ui::userInterfaceInputDouble(const char *title, const char *pre, double *va
     {
         if (valueStr[i] == '.')
             continue;
-
-        if (valueStr[i] == ' ')
-            valueStr[i] = '0';
 
         prePart = pre;
         prePart += valueStr.substring(0, i);
@@ -243,9 +243,9 @@ void Ui::inputPidConstants()
         setStdFont();
         // FIXME: The following should go into a loop with a mapped "Kx" string and config var
         const char *title = "Select\nPID constant";
-        userInterfaceInputDouble(title, "Kp = ", &Config::active.pid_Kp, 3, 1, "");
-        userInterfaceInputDouble(title, "Ki = ", &Config::active.pid_Ki, 3, 1, "");
-        userInterfaceInputDouble(title, "Kd = ", &Config::active.pid_Kd, 3, 1, "");
+        userInterfaceInputDouble(title, "Kp = ", &Config::active.pid_Kp, 4, 1, "");
+        userInterfaceInputDouble(title, "Ki = ", &Config::active.pid_Ki, 4, 1, "");
+        userInterfaceInputDouble(title, "Kd = ", &Config::active.pid_Kd, 4, 1, "");
     } while (u8g2.nextPage());
 }
 
@@ -304,16 +304,6 @@ void Ui::displaySetupScreen()
         s += VERSION_TEXT;
         s += ")";
 
-        /* Setup
-         * -----
-         * Reflow Profile
-         * Display unit
-         * SSR Type
-         * PID Coefficients
-         * Calibration
-         * Save to EEPROM
-         * Quit
-         */
         uint8_t sel = u8g2.userInterfaceSelectionList(s.c_str(), 1,
                                                       "Reflow Profile\n(Display unit)\nSSR Type\nPID constants\nBangBang\nPID Tuner\nLoad saved\nSave & Quit\nQuit");
         //                                                    1               2              3         4             5       6           7            8        9
@@ -362,21 +352,6 @@ void Ui::loop()
     {
     case Mode::Setup:
         displaySetupScreen();
-        /*
-                        // Double -> String
-                        char cbuf[10];
-                        dtostrf(conf->pid_Kp, 8, 2, cbuf);
-                        Serial.print("Before: ");
-                        Serial.println(cbuf);
-
-                        setStdFont();
-                        inputPidConstants();
-
-                        // Double -> String
-                        dtostrf(conf->pid_Kp, 8, 2, cbuf);
-                        Serial.print("After: ");
-                        Serial.println(cbuf);
-        */
         break;
     default:
         displayMainScreen();
