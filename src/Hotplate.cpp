@@ -85,7 +85,7 @@ void Hotplate::loop()
     uint32_t now = millis();
     if (now < _nextInterval_ms)
     {
-        return;
+        //return;
     }
     _nextInterval_ms = now + PID_SAMPLE_MS;
 

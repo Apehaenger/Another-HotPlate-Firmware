@@ -44,6 +44,7 @@
  * 78.1%  1599    90.2% 27722   str -> sprintf
  * 78.1%  1599    90.0% 27636   Fixed double/wrong °C
  * 78.1%  1599    89.9% 27626   Further Ui optimization and enlarged PID values
+ * 78.0%  1597    89.8% 27586   Some PID tuner optimizations/changes
  */
 #include <Arduino.h>
 #include "main.hpp"

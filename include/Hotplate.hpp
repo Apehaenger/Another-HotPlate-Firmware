@@ -5,7 +5,7 @@
 
 #include <AutoPID.h>
 
-#define PID_SAMPLE_MS 200 // Should be the shortest PTC-on time, but not shorter than a typical inrush-current period of a PTC (approx. 0.1s)
+#define PID_SAMPLE_MS 250 // Should be the shortest PTC-on time, but not shorter than a typical inrush-current period of a PTC (approx. 0.1s)
 
 class Hotplate
 {
@@ -77,8 +77,8 @@ private:
 
     // FIXME: Should go into setuo?!
     uint16_t _pidTunerTempTarget = 100;
-    const uint8_t _pidTunerTempNoise = 2;
-    const uint8_t _pidTunerTempSettled = 10;
+    //const uint8_t _pidTunerTempNoise = 2;
+    //const uint8_t _pidTunerTempSettled = 10;
     uint16_t _pidTunerTempMax;
 
     bool pwmWindowReached();
