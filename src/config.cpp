@@ -28,6 +28,7 @@ namespace Config
         {
                 EEPConfig eConf;
                 EEPROM.get(0, eConf);
+                eConf.conf.version = CONFIG_VERSION;
 
                 uint32_t configChecksum = CRC32::calculate((uint8_t *)&eConf.conf, sizeof(eConf.conf));
 

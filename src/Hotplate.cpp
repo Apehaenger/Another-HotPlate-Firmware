@@ -85,7 +85,7 @@ void Hotplate::loop()
     uint32_t now = millis();
     if (now < _nextInterval_ms)
     {
-        //return;
+        return;
     }
     _nextInterval_ms = now + PID_SAMPLE_MS;
 
@@ -141,8 +141,8 @@ void Hotplate::loop()
             _pidTunerTempMax = _input;
             break;
         }
-        // if(_input <= (_pidTunerTempMax - _pidTunerTempNoise - _pidTunerTempSettled)) // Settled
-        if (_input <= _pidTunerTempTarget) // Settled
+        if (_input <= (_pidTunerTempMax - _pidTunerTempSettled)) // Settled
+        // if (_input <= _pidTunerTempTarget) // Settled
         {
             _state = State::StandBy;
             _mode = Mode::Manual;

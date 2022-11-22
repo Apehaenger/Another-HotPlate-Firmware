@@ -75,10 +75,9 @@ private:
     State _state = State::StandBy;
     bool _power = false;
 
-    // FIXME: Should go into setuo?!
+    // FIXME: Might go into setup?!
     uint16_t _pidTunerTempTarget = 100;
-    //const uint8_t _pidTunerTempNoise = 2;
-    //const uint8_t _pidTunerTempSettled = 10;
+    const uint8_t _pidTunerTempSettled = 10;
     uint16_t _pidTunerTempMax;
 
     bool pwmWindowReached();
