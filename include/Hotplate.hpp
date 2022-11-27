@@ -2,6 +2,8 @@
 #define Hotplate_h
 
 #define PID_TUNER_INTERVAL_MS 500 // How often Serial.print values for PID Tuner
+#define PID_TUNER_TEMP_SETTLED_C 10
+#define PID_TUNER_TEMP_STEPS_C 30 // PID Tuner setpoint steps (after temp settle) to get a wide range of PID Tuner setps
 
 #include <AutoPID.h>
 
@@ -75,11 +77,7 @@ private:
     State _state = State::StandBy;
     bool _power = false;
 
-    // FIXME: Should go into setuo?!
-    uint16_t _pidTunerTempTarget = 100;
-    //const uint8_t _pidTunerTempNoise = 2;
-    //const uint8_t _pidTunerTempSettled = 10;
-    uint16_t _pidTunerTempMax;
+    uint16_t _pidTunerTempTarget, _pidTunerTempMax;
 
     bool pwmWindowReached();
     void setPower(bool);

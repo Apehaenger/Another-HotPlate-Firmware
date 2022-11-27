@@ -129,7 +129,7 @@ void Ui::displayMainScreen()
             u8g2.drawStr(x, y, cbuf);
             break;
         case Hotplate::State::PID:
-            sprintf(cbuf, "PID %4d/%4d", hotplate.getOutput(), Config::active.pid_pwm_window_ms);
+            sprintf(cbuf, "PID %5d/%5d", hotplate.getOutput(), Config::active.pid_pwm_window_ms);
             u8g2.drawStr(x, y, cbuf);
             break;
         case Hotplate::State::BangOff:
@@ -227,10 +227,20 @@ void Ui::inputBangValues()
     do
     {
         setStdFont();
-        // FIXME: The following should go into a loop with a mapped "Kx" string and config var
         if (u8g2.userInterfaceInputValue("Bang-ON until\ntarget-temp", "minus ", &Config::active.pid_bangOn_temp_c, 0, 255, 3, " °C") == 0)
             return; // We don't have a "home" (escape) button yet
         if (u8g2.userInterfaceInputValue("Bang-OFF at\ntarget-temp", "plus ", &Config::active.pid_bangOff_temp_c, 0, 255, 3, " °C") == 0)
+            return; // We don't have a "home" (escape) button yet
+    } while (u8g2.nextPage());
+}
+
+void Ui::inputMaxTemp()
+{
+    u8g2.firstPage();
+    do
+    {
+        setStdFont();
+        if (u8g2.userInterfaceInputValue("Set max.", "Temperature ", &Config::active.max_temp_c, 0, 255, 3, " °C") == 0)
             return; // We don't have a "home" (escape) button yet
     } while (u8g2.nextPage());
 }
@@ -241,7 +251,6 @@ void Ui::inputPidConstants()
     do
     {
         setStdFont();
-        // FIXME: The following should go into a loop with a mapped "Kx" string and config var
         const char *title = "Select\nPID constant";
         userInterfaceInputDouble(title, "Kp = ", &Config::active.pid_Kp, 4, 1, "");
         userInterfaceInputDouble(title, "Ki = ", &Config::active.pid_Ki, 4, 1, "");
@@ -305,8 +314,8 @@ void Ui::displaySetupScreen()
         s += ")";
 
         uint8_t sel = u8g2.userInterfaceSelectionList(s.c_str(), 1,
-                                                      "Reflow Profile\n(Display unit)\nSSR Type\nPID constants\nBangBang\nPID Tuner\nLoad saved\nSave & Quit\nQuit");
-        //                                                    1               2              3         4             5       6           7            8        9
+                                                      "Reflow Profile\n(Display unit)\nSSR Type\nMax. Temperature\nPID constants\nBangBang\nPID Tuner\nLoad saved\nSave & Quit\nQuit");
+        //                                                    1               2              3         4                 5           6          7           8          9         10
         switch (sel)
         {
         case 1: // Reflow Profile
@@ -315,21 +324,24 @@ void Ui::displaySetupScreen()
         case 3: // SSR Type
             inputSsrType();
             break;
-        case 4: // PID constants
+        case 4: // BangBang values
+            inputMaxTemp();
+            break;
+        case 5: // PID constants
             inputPidConstants();
             hotplate.updatePidGains();
             break;
-        case 5: // BangBang values
+        case 6: // BangBang values
             inputBangValues();
             break;
-        case 6: // PID Tuner
+        case 7: // PID Tuner
             hotplate.setMode(Hotplate::Mode::PIDTuner);
             changeMode(Mode::Main);
             break;
-        case 7: // Load saved
+        case 8: // Load saved
             Config::load();
             break;
-        case 8: // Save & Quit
+        case 9: // Save & Quit
             Config::save();
             changeMode(Mode::Main);
             break;
