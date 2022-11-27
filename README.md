@@ -39,7 +39,7 @@ Built-in "Setup" within Hot-Plate user interface
 
 Simply start an automatic [step response](https://en.wikipedia.org/wiki/Step_response) run, with a connected serial console.
 Afterwards copy the resulting data into [PID Tuner](https://pidtuner.com) and (auto-)tune your PID constants.
-BTW: This step response run will also caluclate the overshot of the tuned target temperature which might be used (at least as indication) for the [BangON](#bangonbangoff) setting. 
+BTW: This step response can also be used to determine the overshot of the tuned target temperatures which might be used (at least as indication) for the [BangON](#bangonbangoff) setting. 
 
 ![Setup BangON](assets/images/PIDTuner-Start.jpg)
 ![Setup BangOFF](assets/images/PIDTuner-Heat.jpg)
@@ -97,7 +97,7 @@ Assembled DIY Hot Plate like described in "[Tim's Hot Plate](https://www.instruc
 
 ## Known Bugs/Issues
 
-- I've the impression that the Ki constant of the (currently) used [AutoPID](https://r-downing.github.io/AutoPID/) doesn't behave as expected. Will revalidate later ...
+- [X] I've the impression that the Ki constant of the (currently) used [AutoPID](https://r-downing.github.io/AutoPID/) doesn't behave as expected -> Now fixed
 
 ## Technology
 
@@ -106,11 +106,11 @@ The code structure is [PlatformIO/VSCode](https://platformio.org/) based (no Ard
 ## Installing
 
 1. Upload .hex or .elf file WITHOUT HAVING AC-MAINS CONNECTED
-2. Long-press (> 0.5s) to get into built-in setup
-3. Choose "SSR Type"
-4. Select your SSR type (Active-Low/High). In the case  of [Tim's Hot Plate](https://www.instructables.com/Tims-Hot-Plate/) it will be "Active-Low"
-5. Choose "Save & Quit"
-6. Plug-in AC-Mains. Happy reflow soldering...
+1. Long-press (> 0.5s) to get into built-in setup
+1. Choose "SSR Type"
+1. Select your SSR type (Active-Low/High). In the case  of [Tim's Hot Plate](https://www.instructables.com/Tims-Hot-Plate/) it will be "Active-Low"
+1. Choose "Save & Quit"
+1. Plug-in AC-Mains. Happy reflow soldering...
 
 ## Usage
 
@@ -125,6 +125,7 @@ The code structure is [PlatformIO/VSCode](https://platformio.org/) based (no Ard
 * [MAX6675](https://github.com/adafruit/MAX6675-library) - Arduino library for interfacing with MAX6675 thermocouple amplifier
 * [CRC32](https://github.com/bakercp/CRC32) - An Arduino library for calculating a CRC32 checksum
 * [AutoPID](https://github.com/r-downing/AutoPID) - Fairly good documented (as well as feature rich and small) Arduino AutoPID library 
+* [PID Tuner](https://pidtuner.com) - Will help you to finde reasonable PID constants
 
 ## Contributing
 

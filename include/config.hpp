@@ -3,7 +3,7 @@
 
 #include "Profile.hpp"
 
-#define CONFIG_VERSION 4 // Change to force reload of default config even if config structure hasn't changed
+#define CONFIG_VERSION 8 // Change to force reload of default config even if config structure hasn't changed
 
 namespace Config
 {
@@ -12,14 +12,16 @@ namespace Config
     {
         bool disp_unit_c = true; // °C/F
 
-        uint16_t pid_pwm_window_ms = 10000; // For best autotune results, this should be at least system-temp-delay time long
-        uint16_t pid_max_temp_c = 300;      // Max. PTC/PID temperature (*C)
+        uint8_t max_temp_c = 200; // Max. possible (or allowed) heater temperature (*C)
+        
+        uint16_t pid_pwm_window_ms = 5000; // For easiest handling, this might/should be approx. system-temp-delay time long
 
-        double pid_Kp = 50;
-        double pid_Ki = 0;
-        double pid_Kd = 0;
-        uint8_t pid_bangOn_temp_c = 0;
-        uint8_t pid_bangOff_temp_c = 0;
+        double pid_Kp = 100.0;
+        double pid_Ki = 2.0;
+        double pid_Kd = 422.0;
+
+        uint8_t pid_bangOn_temp_c = 50;
+        uint8_t pid_bangOff_temp_c = 5;
 
         Profile::Profiles profile = Profile::Profiles::Manual;
 

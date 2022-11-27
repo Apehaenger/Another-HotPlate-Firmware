@@ -120,6 +120,7 @@ void Hotplate::loop()
         {
             break;
         }
+        _pidTunerTempTarget = _input + PID_TUNER_TEMP_STEPS_C;
         _setpoint = _pidTunerTempTarget;
         _state = State::Heat;
         _output = Config::active.pid_pwm_window_ms;
@@ -127,11 +128,10 @@ void Hotplate::loop()
     case State::Heat:
         if (_input > _setpoint) // By the use of _input the user may adapt the target during heatup
         {
-            _pidTunerTempTarget = _setpoint;
             _setpoint = 0;
             _output = 0;
             _pwmWindowStart_ms = now;
-            _pidTunerTempMax = _input; // Useless as it will overshoot in any case?!
+            _pidTunerTempMax = _input;
             _state = State::Settle;
         }
         break;
@@ -141,13 +141,18 @@ void Hotplate::loop()
             _pidTunerTempMax = _input;
             break;
         }
-        if (_input <= (_pidTunerTempMax - _pidTunerTempSettled)) // Settled
-        // if (_input <= _pidTunerTempTarget) // Settled
+        if (_input <= (_pidTunerTempMax - PID_TUNER_TEMP_SETTLED_C)) // Settled
         {
+            if (_input + PID_TUNER_TEMP_STEPS_C < Config::active.max_temp_c)
+            {
+                // One more step
+                _state = State::Wait;
+                break;
+            }
             _state = State::StandBy;
             _mode = Mode::Manual;
             serialPrintLine();
-            Serial.print("Done. Overshot (BangON) = ");
+            Serial.print("Done. Last step overshot (BangON) = ");
             Serial.println(_pidTunerTempMax - _pidTunerTempTarget);
         }
         break;

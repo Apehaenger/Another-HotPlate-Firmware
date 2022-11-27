@@ -32,19 +32,10 @@
  * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
  * 63.9%  1309    86.2% 26482   Separated profile handling into separate class and switched to global class pointer
  * 72.8%  1490    89.5% 27492   Added/activated Serial for PID Tuner. It's going to become narrow...
- * 81.1%  1660    95.8% 29416   PID Tuner and final corrections. Everything looks fine
- * 79.9%  1636    95.4% 29316   Simplifid initial PID-Tuner wait time
- * 79.9%  1636    95.3% 29282   Optimized profile time calculations
- * 79.9%  1636    95.3% 29282   Patched AutoPID derivate calculation
- * 79.2%  1622    94.9% 29144   Hotplate not an sub-class of Runnable anymore = - 14 byte RAM, -138 byte flash
- * 77.7%  1592    91.4% 28090   Removed Runnable super-class and saved 44 byte RAM, 1192 byte Flash
  * 77.4%  1585    90.9% 27924   MainScreen via CRC instead of single values
- * 77.8%  1593    91.0% 27942   Added missing "wait..." string
- * 77.8%  1593    90.9% 27930   str -> char*
- * 78.1%  1599    90.2% 27722   str -> sprintf
- * 78.1%  1599    90.0% 27636   Fixed double/wrong °C
  * 78.1%  1599    89.9% 27626   Further Ui optimization and enlarged PID values
  * 78.0%  1597    89.8% 27586   Some PID tuner optimizations/changes
+ * 80.3%  1645    91.1% 27994   Multiple PID Tuner steps
  */
 #include <Arduino.h>
 #include "main.hpp"
@@ -138,7 +129,7 @@ bool startIfStandByProcess()
 
 void onPlusPressed()
 {
-  if (hotplate.getSetpoint() < Config::active.pid_max_temp_c)
+  if (hotplate.getSetpoint() < Config::active.max_temp_c)
   {
     startIfStandByProcess();
     hotplate.setSetpoint(hotplate.getSetpoint() + 1);

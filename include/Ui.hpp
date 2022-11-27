@@ -21,7 +21,7 @@ public:
     void loop();
 
     void changeMode(Mode nextMode) { _mode = nextMode; };
-//    void setMainScreenTitle(const char*);
+    //    void setMainScreenTitle(const char*);
 
 private:
     typedef struct MainScreenCrcData
@@ -44,6 +44,7 @@ private:
     void displaySetupScreen();
 
     void inputBangValues();
+    void inputMaxTemp();
     void inputPidConstants();
     void inputReflowProfile();
     void inputSsrType();

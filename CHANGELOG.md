@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added [PID Tuner](https://pidtuner.com) output
 - Added average temperatures for more stable temperature display/handling 
+- Added "Max. Temp" setting (which is required for PID Tuner steps)
 - Added Changelog
 
 ### Changed
