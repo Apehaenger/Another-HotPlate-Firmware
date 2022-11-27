@@ -21,7 +21,6 @@ public:
     void loop();
 
     void changeMode(Mode nextMode) { _mode = nextMode; };
-    //    void setMainScreenTitle(const char*);
 
 private:
     typedef struct MainScreenCrcData

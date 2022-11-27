@@ -41,7 +41,7 @@ void Ui::displayMainScreen()
     // Do it via struct and a single crc.calculate() call instead of multiple crc.update() calls which would be more expensive!
     MainScreenCrcData crcData = {hotplate.getMode(), hotplate.getPower(), hotplate.getSetpoint(), hotplate.getState(),
                                  profile.getSecondsLeft(), thermocouple.getTemperatureAverage()};
-    uint32_t mainScreenCrc = CRC32::calculate((uint8_t *)&crcData, sizeof(crcData));
+    uint32_t mainScreenCrc = CRC32::calculate(&crcData, 1);
 
 #ifdef DEBUG_UI_SERIAL
     Serial.print("mainScreenCrc: ");
@@ -129,7 +129,7 @@ void Ui::displayMainScreen()
             u8g2.drawStr(x, y, cbuf);
             break;
         case Hotplate::State::PID:
-            sprintf(cbuf, "PID %5d/%5d", hotplate.getOutput(), Config::active.pid_pwm_window_ms);
+            sprintf(cbuf, "PID %4d/%4d", hotplate.getOutput(), Config::active.pid_pwm_window_ms);
             u8g2.drawStr(x, y, cbuf);
             break;
         case Hotplate::State::BangOff:
@@ -182,9 +182,6 @@ void Ui::userInterfaceInputDouble(const char *title, const char *pre, double *va
         valueStr.replace(' ', '0');
     }
 
-    // Serial.print("valueStr: ");
-    // Serial.println(valueStr);
-
     // Loop over als string chars
     for (uint8_t i = 0; i < valueStr.length(); i++)
     {
@@ -200,20 +197,6 @@ void Ui::userInterfaceInputDouble(const char *title, const char *pre, double *va
         postPart = "]";
         postPart += valueStr.substring(i + 1);
 
-        /*
-        Serial.print("i: ");
-        Serial.print(i, HEX);
-        Serial.print(", pre: '");
-        Serial.print(pre);
-        Serial.print("', prePart: '");
-        Serial.print(prePart);
-        Serial.print("', edit digit ");
-        Serial.print(iV, HEX);
-        Serial.print(", postPart: '");
-        Serial.print(postPart);
-        Serial.println("'");
-        */
-
         if (u8g2.userInterfaceInputValue(title, prePart.c_str(), &iV, 0, 9, 1, postPart.c_str()) == 0)
             return; // We don't have a "home" (escape) button yet
         valueStr[i] = iV + 0x30;
@@ -228,9 +211,9 @@ void Ui::inputBangValues()
     {
         setStdFont();
         if (u8g2.userInterfaceInputValue("Bang-ON until\ntarget-temp", "minus ", &Config::active.pid_bangOn_temp_c, 0, 255, 3, " °C") == 0)
-            return; // We don't have a "home" (escape) button yet
+            return; // We don't have a "home" (escape) button
         if (u8g2.userInterfaceInputValue("Bang-OFF at\ntarget-temp", "plus ", &Config::active.pid_bangOff_temp_c, 0, 255, 3, " °C") == 0)
-            return; // We don't have a "home" (escape) button yet
+            return; // We don't have a "home" (escape) button
     } while (u8g2.nextPage());
 }
 
@@ -260,7 +243,6 @@ void Ui::inputPidConstants()
 
 void Ui::setStdFont()
 {
-    // u8g2.setFont(my_u8g2_font_8x13B);
     u8g2.setFont(my_u8g2_font_7x13B);
 }
 

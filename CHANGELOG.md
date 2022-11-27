@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<!--
 ## [Unreleased]
+
+### Added 
+
+### Removed
+
+- tbd
+- something from [@someone](https://github.com/someone).
+
+-->
+
+## [0.5.0] - 2022-11-27
 
 ### Added 
 
@@ -27,15 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed possibliy wrong PID derivate calculation as discussed [here](https://github.com/r-downing/AutoPID/issues/4)
 
-<!-- Further samples:
-
-
-### Removed
-
-- tbd
-- something from [@someone](https://github.com/someone).
-
--->
 
 ## [0.4.0] - 2022-11-08
 
@@ -58,7 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BangON and BangOFF values
 - Config storage into EEPROM
 
-[unreleased]: https://github.com/Apehaenger/Another-HotPlate-Firmware/compare/v0.4.0...develop
-<!--
-[0.4.x]: https://github.com/Apehaenger/Another-HotPlate-Firmware/compare/v0.4.0...v0.4.x -->
+[unreleased]: https://github.com/Apehaenger/Another-HotPlate-Firmware/compare/v0.5.0...develop
+[0.5.0]: https://github.com/Apehaenger/Another-HotPlate-Firmware/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/Apehaenger/Another-HotPlate-Firmware/releases/v0.4.0

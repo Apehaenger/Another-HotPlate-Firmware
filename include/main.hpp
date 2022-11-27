@@ -35,7 +35,7 @@
 #define LONG_PRESS_TIME_MS 500 // Long-Press if larger
 
 // Internal
-#define VERSION_TEXT "0.5.0b"
+#define VERSION_TEXT "0.5.0"
 
 extern Ui ui;
 extern Thermocouple thermocouple;

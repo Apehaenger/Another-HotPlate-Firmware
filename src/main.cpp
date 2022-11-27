@@ -20,22 +20,13 @@
  *
  * Author: Jörg Ebeling <joerg@ebeling.ws>
  *
- * TODO:
- * - Test PIDTuner and place into config defaults
- *
  * Usage:
  *     RAM      |    Flash    | Comment
  * ----------------------------------------------------------------------
- * 71.9%  1473    91.8% 28186   0.3.0 new Bootloader
- * 62.9%  1289    82.8% 25432   0.4 without DEBUG_SERIAL
- * 62.7%  1285    82.8% 25428   0.4.0 without DEBUG_SERIAL
- * 64.2%  1315    86.2% 26470   Wasted 1042!! Bytes for more clear Runnable implementation
- * 63.9%  1309    86.2% 26482   Separated profile handling into separate class and switched to global class pointer
- * 72.8%  1490    89.5% 27492   Added/activated Serial for PID Tuner. It's going to become narrow...
- * 77.4%  1585    90.9% 27924   MainScreen via CRC instead of single values
- * 78.1%  1599    89.9% 27626   Further Ui optimization and enlarged PID values
- * 78.0%  1597    89.8% 27586   Some PID tuner optimizations/changes
- * 80.3%  1645    91.1% 27994   Multiple PID Tuner steps
+ * 71.9%  1473    91.8% 28186   v0.3.0 new Bootloader
+ * 62.9%  1289    82.8% 25432   v0.4 without DEBUG_SERIAL
+ * 62.7%  1285    82.8% 25428   v0.4.0 without DEBUG_SERIAL
+ * 80.2%  1643    91.1% 27992   v0.5.0
  */
 #include <Arduino.h>
 #include "main.hpp"
