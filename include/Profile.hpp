@@ -19,7 +19,7 @@ public:
         [Sn965Ag30Cu05] = "Sn96.5/Ag3.0/Cu0.5",
     };
 
-    Profile();
+    Profile() {};
     void loop();
 
     short getSecondsLeft();

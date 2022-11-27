@@ -18,10 +18,6 @@
 #include "main.hpp"
 #include "config.hpp"
 
-Profile::Profile()
-{
-}
-
 /**
  * @brief Start profile if not already started
  *
