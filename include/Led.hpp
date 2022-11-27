@@ -11,13 +11,12 @@
 
 class Led
 {
+    const uint8_t _pin;
+
 public:
-    Led(uint8_t pin);
+    Led(const uint8_t pin);
 
-    void blinkByTemp(double temp);
-
-private:
-    uint8_t _pin;
+    void blinkByTemp(const float temp);
 };
 
 #endif

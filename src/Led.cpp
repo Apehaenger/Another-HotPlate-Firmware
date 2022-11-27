@@ -17,29 +17,28 @@
 #include "main.hpp"
 #include "Led.hpp"
 
-Led::Led(uint8_t pin)
+Led::Led(uint8_t pin) : _pin(pin)
 {
-    _pin = pin;
     pinMode(pin, OUTPUT);
 }
 
-void Led::blinkByTemp(double temp)
+void Led::blinkByTemp(const float temp)
 {
     uint32_t currentMillis = millis();
     if (temp >= (LED_WARM_TEMP + LED_HOT_TEMP))
     {
         digitalWrite(_pin, 1); // Very-Hot LED
+        return;
     }
-    else if (temp >= LED_HOT_TEMP)
+    if (temp >= LED_HOT_TEMP)
     {
         digitalWrite(_pin, (currentMillis / LED_HOT_MILLIS) % 2); // Hot LED
+        return;
     }
-    else if (temp >= LED_WARM_TEMP)
+    if (temp >= LED_WARM_TEMP)
     {
         digitalWrite(_pin, (currentMillis / LED_WARM_MILLIS) % 2); // Warm LED
+        return;
     }
-    else
-    {
-        digitalWrite(_pin, 0);
-    }
+    digitalWrite(_pin, 0);
 }

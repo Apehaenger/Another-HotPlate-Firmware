@@ -1,90 +1,85 @@
 #ifndef Hotplate_h
 #define Hotplate_h
 
-#define PROFILE_TIME_INTERVAL_MS 10000
+#define PID_TUNER_INTERVAL_MS 500 // How often Serial.print values for PID Tuner
+#define PID_TUNER_TEMP_SETTLED_C 10
+#define PID_TUNER_TEMP_STEPS_C 30 // PID Tuner setpoint steps (after temp settle) to get a wide range of PID Tuner setps
 
 #include <AutoPID.h>
-#include "main.hpp"
-#include "Thermocouple.hpp"
+
+#define PID_SAMPLE_MS 250 // Should be the shortest PTC-on time, but not shorter than a typical inrush-current period of a PTC (approx. 0.1s)
 
 class Hotplate
 {
+    const uint8_t _ssrPin;
+
 public:
-    enum State
+    /*
+     * FIXME: Should switch to "flagged enums" and merge them to State,
+     * but they're tricky/ugly with <= C 11.x
+     */
+    enum class Mode : uint8_t
     {
-        Off,
-        On,
-        // Autotune,
+        Manual = 0x0,
+        PIDTuner = 0x1,
     };
 
-    enum Profile : uint8_t // User selectable reflow profile/mode
+    /*
+     * This State enum is for informational (display) AS WELL AS control flow purposes.
+     * It has mixed usage mainly to save some byte.
+     * At the moment there's only the PIDTuner who's using the control flow related items
+     * like (StandBy), Start, Heating and Settle and the used names are held to be generic,
+     * so that they can be used also for other (future) control flows.
+     *
+     * FIXME: Should switch to "flagged enums" and merge also Mode here,
+     * but they're tricky/ugly with <= C 11.x
+     */
+    enum class State : uint8_t
     {
-        Manual,
-        Sn42Bi576Ag04,
-        Sn965Ag30Cu05,
-    };
-
-    const char *profile2str[3] = {
-        [Manual] = "Manual",
-        [Sn42Bi576Ag04] = "Sn42/Bi57.6/Ag0.4",
-        [Sn965Ag30Cu05] = "Sn96.5/Ag3.0/Cu0.5",
-    };
-
-    enum ControllerState
-    {
-        off,
-        pid,
-        bangOn,
-        bangOff,
+        // Control flow purposes
+        StandBy = 0x0, // Waiting for "Press to start" (a process flow)
+        Start = 0x1,   // Start flow
+        Wait = 0x2,    // Wait some off time
+        Heat = 0x4,    // Heat up to to target temp
+        Settle = 0x8,  // Wait temp get settled
+                       // Informational (display) purposes
+        BangOn = 0x10,
+        BangOff = 0x20,
+        PID = 0x40,
     };
 
     Hotplate(uint8_t ssr_pin);
-    void compute(float temp);
-    ControllerState getControllerState();
-    uint16_t getOutput();
-    short getProfileTimePosition();
-    bool getPower();
-    uint16_t getSetpoint();
-    void runProfile();
+
+    void setup();
+    void loop();
+
+    Mode getMode() { return _mode; };
+    uint16_t getOutput() { return _output; };
+    bool getPower() { return _power; };
+    uint16_t getSetpoint() { return _setpoint; };
+    State getState() { return _state; };
+
+    bool isStandBy() { return (isMode(Mode::PIDTuner) && isState(State::StandBy)); };
+    bool isMode(Mode checkMode) { return _mode == checkMode; };
+    bool isState(State checkState) { return _state == checkState; };
+
+    void setMode(Mode newMode) { _mode = newMode; };
+    void setState(State newState) { _state = newState; };
     void setSetpoint(uint16_t setpoint);
+
     void updatePidGains();
 
 private:
-    typedef struct
-    {
-        uint16_t time_s; // After n seconds...
-        uint16_t temp_c; // reach this target temp
-    } ProfileTimeTarget;
-
-    typedef struct
-    {
-        ProfileTimeTarget *timeTargets;
-        uint8_t size; // size of timeTargets[]
-        uint16_t duration_s; // Duration (s) of the complete profile (last entry) 
-    } ProfileTimeTargets;
-
-    // FIXME: Should be possible directly within mode2timeTargets
-    ProfileTimeTarget _profileTimeTargets_Sn42Bi576Ag04[4] = {{90, 90}, {180, 130}, {210, 138}, {240, 165}};
-    ProfileTimeTargets _profileTimeTarget_Sn42Bi576Ag04 = {_profileTimeTargets_Sn42Bi576Ag04, sizeof(_profileTimeTargets_Sn42Bi576Ag04) / sizeof(ProfileTimeTarget), 240};
-    //
-    ProfileTimeTarget _profileTimeTargets_tSn965Ag30Cu05[4] = {{90, 150}, {180, 175}, {210, 217}, {240, 249}};
-    ProfileTimeTargets _profileTimeTarget_tSn965Ag30Cu05 = {_profileTimeTargets_tSn965Ag30Cu05, sizeof(_profileTimeTargets_tSn965Ag30Cu05) / sizeof(ProfileTimeTarget), 240};
-
-    ProfileTimeTargets *_profile2timeTargets[3] = {
-        [Manual] = nullptr,
-        [Sn42Bi576Ag04] = &_profileTimeTarget_Sn42Bi576Ag04,
-        [Sn965Ag30Cu05] = &_profileTimeTarget_tSn965Ag30Cu05,
-    };
-
     AutoPID _myPID;
-    State _state = State::Off;
-    double _input = 0, _setpoint = 0, _output = 0;
-    uint32_t _pwmWindowStart_ms, _profileStart_ms, _profileNext_ms = 0, _pidTunerNext_ms = 0;
-    ControllerState _controllerState = ControllerState::off;
+    double _input, _setpoint = 0, _output = 0;
+    uint32_t _nextInterval_ms = 0, _pwmWindowStart_ms, _pidTunerOutputNext_ms = 0;
+    Mode _mode = Mode::Manual;
+    State _state = State::StandBy;
     bool _power = false;
-    uint8_t _ssrPin;
 
-    short getProfileTemp();
+    uint16_t _pidTunerTempTarget, _pidTunerTempMax;
+
+    bool pwmWindowReached();
     void setPower(bool);
 };
 

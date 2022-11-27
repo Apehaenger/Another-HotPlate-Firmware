@@ -23,30 +23,14 @@
  * Usage:
  *     RAM      |    Flash    | Comment
  * ----------------------------------------------------------------------
- * 71.9%  1473    91.8% 28186   0.3.0 new Bootloader
- * 71.9%  1473    91.8% 28186   Removed while(true) loop in void loop()
- * 72.1%  1477    92.0% 28266   One day later!?
- * 72.1%  1477    90.7% 27874   Reduced open iconic to used icon
- * 72.1%  1477    86.0% 26432   Reduced 8x13B font
- * 72.1%  1477    85.7% 26328   Reduced fur20 font
- * 78.9%  1615    86.6% 26592   Profiles, profile selection & storage, switch to 7x13B
- * 77.5%  1587    86.9% 26706   + "Push to start", before global optimization
- * 77.5%  1587    86.4% 26542   Moved global target to Hotplate::_setpoint and added/implemented getter and setter
- * 77.5%  1587    86.3% 26518   Moved global ssrOn to Hotplate::_power and added/implemented getter and setter
- * 77.1%  1579    86.0% 26418   Migrated rotary.cpp|hpp into main
- * 77.1%  1579    85.5% 26280   Optimized Thermocouple and removed global mVals
- * 60.8%  1246    78.7% 24170   Without DEBUG_SERIAL
- * 77.1%  1580    85.6% 26296   Moved LED to class
- * 77.4%  1585    85.9% 26398   Fixed shared vars from TC/Hotplate
- * 75.5%  1546    87.0% 26728   Finished reflow profile
- * 75.6%  1548    87.1% 26758   Changed unsigned long to uint32_t and fixed two bugs
- * 62.9%  1289    82.8% 25432   0.4 without DEBUG_SERIAL
+ * 71.9%  1473    91.8% 28186   v0.3.0 new Bootloader
+ * 62.9%  1289    82.8% 25432   v0.4 without DEBUG_SERIAL
+ * 62.7%  1285    82.8% 25428   v0.4.0 without DEBUG_SERIAL
+ * 80.2%  1643    91.1% 27992   v0.5.0
  */
 #include <Arduino.h>
 #include "main.hpp"
-#include "Thermocouple.hpp"
-#include "Display.hpp"
-#include "Hotplate.hpp"
+#include "config.hpp"
 #include "Led.hpp"
 
 #if defined ATMEGA328_NEW_CH340_DBG || defined ATMEGA328_NEW_FTDI_DBG
@@ -59,32 +43,30 @@
 #endif
 
 // Init classes
-Display Disp; // Constructor without parameter need to be initiated without braces. Compiler thingy
-Led HotLed(LED_PIN);
-Thermocouple Tc(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
-Hotplate Hotp(SSR_Pin);
+Led hotLed(LED_PIN);
+Thermocouple thermocouple(TC_CLK_PIN, TC_CS_PIN, TC_DO_PIN);
+Hotplate hotplate(SSR_Pin);
+Profile profile;
+Ui ui;
 
 // Internal vars
 volatile byte rotary_aValPrev = 0;             // Rotary A, last level, see ISR(PCINT1_vect)
 volatile byte rotary_sValPrev = 1;             // Rotary S, last level, see ISR(PCINT1_vect)
 volatile unsigned long rotary_sPressed_ms = 0; // volatile, see ISR(PCINT1_vect)
 
-uint32_t lastMillis = millis();
-unsigned long time_disp = 0;
-unsigned long time_ptc = 0;
-
 void setup()
 {
-#ifdef DEBUG_SERIAL
-  Serial.begin(115200);
-  Serial.println("Initializing...");
+#ifndef DEBUG_AVRSTUB
+  Serial.begin(115200); // TODO: -> Setup?
+  Serial.println("Init...");
 #endif
 #ifdef DEBUG_AVRSTUB
   debug_init();
 #endif
-  Config::load();
 
-  Disp.initialize();
+  Config::load();
+  ui.setup();
+  hotplate.setup();
 
   // FIXME JE: Check/Test if the internal pull up would save the external soldered ones
   pinMode(ROTARY_A_PIN, INPUT_PULLUP); // Arduino Analog input 0 (PCINT8), input and set pull up resistor:
@@ -110,72 +92,64 @@ void setup()
 
 void loop()
 {
-  uint32_t currentMillis = millis();
-  if (currentMillis < lastMillis)
+  profile.loop();
+  hotplate.loop();
+  ui.loop();
+  hotLed.blinkByTemp(thermocouple.getTemperatureAverage());
+}
+
+/**
+ * @brief Start if a process like PIDTuner or ReflowProfile is idle (waiting to get started)
+ *
+ * @return true if there was an idle process
+ * @return false if there isn't an idle process
+ */
+bool startIfStandByProcess()
+{
+  if (hotplate.isStandBy())
   {
-    // skip main loop in case of millis() overflow
-    lastMillis = currentMillis;
-    time_disp = currentMillis;
-    time_ptc = currentMillis;
-    return;
+    hotplate.setState(Hotplate::State::Start);
+    return true;
   }
-
-  // main event loop actions
-
-  // PTC (minimum PWM) Interval
-  // Use PID sample time to ensure that smaller PID output values do NOT trigger a shorter SSR-ON pules
-  // (Typical inrush-current of a PTC is about 0.1s)
-  if (currentMillis >= time_ptc + Config::active.pid_sample_ms)
+  if (profile.isStandBy())
   {
-    time_ptc += Config::active.pid_sample_ms;
-    Hotp.compute(Tc.getTemperature());
+    return profile.startProfile();
   }
-
-  // MyDisplay Interval
-  if (currentMillis >= time_disp + INTERVAL_DISP)
-  {
-    time_disp += INTERVAL_DISP;
-
-    Disp.update(&Tc, &Hotp);
-  }
-
-  HotLed.blinkByTemp(Tc.getTemperature());
-
-  lastMillis = currentMillis;
+  return false;
 }
 
 void onPlusPressed()
 {
-  if (Hotp.getSetpoint() < Config::active.pid_max_temp_c)
+  if (hotplate.getSetpoint() < Config::active.max_temp_c)
   {
-    Hotp.setSetpoint(Hotp.getSetpoint() + 1);
+    startIfStandByProcess();
+    hotplate.setSetpoint(hotplate.getSetpoint() + 1);
   }
 }
 
 void onMinusPressed()
 {
-  if (Hotp.getSetpoint())
+  if (hotplate.getSetpoint())
   {
-    Hotp.setSetpoint(Hotp.getSetpoint() - 1);
+    startIfStandByProcess();
+    hotplate.setSetpoint(hotplate.getSetpoint() - 1);
   }
 }
 
 void onPushPressed()
 {
-  if (Config::active.profile != Hotplate::Profile::Manual &&
-      Hotp.getControllerState() == Hotplate::ControllerState::off)
-  { // Start reflow profile
-    Hotp.runProfile();
-  }
-  else
+  if (!startIfStandByProcess())
   {
-    Hotp.setSetpoint(0);
+    hotplate.setMode(Hotplate::Mode::Manual);
+    hotplate.setState(Hotplate::State::StandBy);
+    profile.stopProfile();
+    hotplate.setSetpoint(0);
   }
 }
 
 void onPushLongPressed()
 {
-  Disp.changeUiMode(Display::uiMode::Setup);
+  ui.changeMode(Ui::Mode::Setup);
 }
 
 ISR(PCINT1_vect)

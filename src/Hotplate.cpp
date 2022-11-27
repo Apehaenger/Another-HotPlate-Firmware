@@ -16,129 +16,22 @@
  */
 #include <Arduino.h>
 #include "main.hpp"
-#include "Hotplate.hpp"
+#include "config.hpp"
 
-Hotplate::Hotplate(uint8_t ssr_pin) : _myPID(&_input, &_setpoint, &_output,
+Hotplate::Hotplate(uint8_t ssr_pin) : _ssrPin(ssr_pin),
+                                      _myPID(&_input, &_setpoint, &_output,
                                              0, Config::active.pid_pwm_window_ms,
                                              Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd)
 {
-    _ssrPin = ssr_pin;
-    pinMode(ssr_pin, OUTPUT);
+}
+
+void Hotplate::setup()
+{
+    pinMode(_ssrPin, OUTPUT);
     setPower(false); // Be sure it's off
 
     _myPID.setBangBang(Config::active.pid_bangOn_temp_c, Config::active.pid_bangOff_temp_c);
-    _myPID.setTimeStep(Config::active.pid_sample_ms); // time interval at which PID calculations are allowed to run in milliseconds
-}
-
-Hotplate::ControllerState Hotplate::getControllerState()
-{
-    return _controllerState;
-}
-
-uint16_t Hotplate::getOutput()
-{
-    return _output;
-}
-
-bool Hotplate::getPower()
-{
-    return _power;
-}
-
-uint16_t Hotplate::getSetpoint()
-{
-    return _setpoint;
-}
-
-void Hotplate::runProfile()
-{
-    _state = State::On;
-    _profileStart_ms = millis();
-    _profileNext_ms = _profileStart_ms;
-}
-
-short Hotplate::getProfileTimePosition()
-{
-    // In-line math in C sucks!
-    long timePosMs = millis() - _profileStart_ms - (1000UL * _profile2timeTargets[Config::active.profile]->duration_s);
-    short timePosS = round(0.001 * timePosMs);
-#ifdef DEBUG_SERIAL_PROTIMPOS
-    Serial.print("millis(): ");
-    Serial.print(millis());
-    Serial.print(", profile start(ms): ");
-    Serial.print(_profileStart_ms);
-    Serial.print(", profile duration(s): ");
-    Serial.print(_profile2timeTargets[Config::active.profile]->duration_s);
-    Serial.print(", timePosMs: ");
-    Serial.print(timePosMs);
-    Serial.println(", timePosS: ");
-#endif
-    return timePosS;
-}
-
-/*
- * Get profile time/temp target dependent of current time/temp
- * @return -1 in the case where PROFILE_TIME_INTERVAL is not reached or profile ended
- */
-short Hotplate::getProfileTemp()
-{
-    uint32_t now = millis();
-    short nextTemp;
-
-    if (_profileNext_ms && now < _profileNext_ms)
-    {
-        return -1;
-    }
-    _profileNext_ms += PROFILE_TIME_INTERVAL_MS;
-
-    ProfileTimeTarget timeTarget;
-
-    for (uint8_t i = 0; i < _profile2timeTargets[Config::active.profile]->size; i++)
-    {
-        timeTarget = _profile2timeTargets[Config::active.profile]->timeTargets[i]; // Make code more readable
-
-#ifdef DEBUG_SERIAL_PROTEM
-        Serial.print("Profile: ");
-        Serial.print(Config::active.profile);
-        Serial.print(" = ");
-        Serial.print(Hotplate::profile2str[Config::active.profile]);
-        Serial.print(": time_s = ");
-        Serial.print(timeTarget.time_s);
-        Serial.print(", temp_c = ");
-        Serial.println(timeTarget.temp_c);
-#endif
-        if ((now - _profileStart_ms) > (1000UL * timeTarget.time_s) ||
-            _input > timeTarget.temp_c) // FIXME: This would result in a wrong profile time left display if already hot
-        {
-            continue; // Already beyond this time or temp target
-        }
-
-        // In-line math in C sucks :-/
-        float tempDiff = timeTarget.temp_c - _input;
-        float timeLeft_ms = (1000.0 * timeTarget.time_s) + _profileStart_ms - now;
-        float intervalsProfile = (1000.0 * timeTarget.time_s) / PROFILE_TIME_INTERVAL_MS;
-        float intervalsLeft = (timeLeft_ms / PROFILE_TIME_INTERVAL_MS) - 1;
-
-        nextTemp = _input + round(tempDiff / intervalsProfile * (intervalsProfile - intervalsLeft));
-
-#ifdef DEBUG_SERIAL_PROTEM
-        Serial.print("TimeTarget = ");
-        Serial.print(i);
-        Serial.print(": tempDiff = ");
-        Serial.print(tempDiff);
-        Serial.print(", timeLeft(ms) = ");
-        Serial.print(timeLeft_ms);
-        Serial.print(", intervals = ");
-        Serial.print(intervalsProfile);
-        Serial.print(", intervalsLeft = ");
-        Serial.print(intervalsLeft);
-        Serial.print(", new Setpoint = ");
-        Serial.println(nextTemp);
-#endif
-        return nextTemp;
-    }
-    _profileNext_ms = 0; // Stop looping through profile array
-    return 0; // Profile ended
+    _myPID.setTimeStep(PID_SAMPLE_MS); // time interval at which PID calculations are allowed to run in milliseconds
 }
 
 void Hotplate::setPower(bool pow)
@@ -151,66 +44,122 @@ void Hotplate::setSetpoint(uint16_t setpoint)
 {
     _setpoint = setpoint;
 
-    if (_setpoint)
+    if (!_setpoint)
     {
-        //_myPID.stop();
-        _myPID.run();
-        _state = State::On;
-        _pwmWindowStart_ms = millis();
-    }
-    else
-    {
-        _state = State::Off;
-        _controllerState = ControllerState::off;
+        _mode = Mode::Manual;
+        _state = State::StandBy;
         _myPID.stop();
         _output = 0;
-        setPower(false); // Don't wait for the next compute()
+        setPower(false); // Don't wait for the next loop()
+        return;
     }
+
+    if (_state == State::StandBy)
+    {
+        _state = State::PID;
+    }
+    _myPID.run();
+    _pwmWindowStart_ms = millis();
 }
 
 /**
- * @brief Update PID controllers PID gains from (probably actualized) config
+ * @brief Update PID controllers PID gains
  */
 void Hotplate::updatePidGains()
 {
     _myPID.setGains(Config::active.pid_Kp, Config::active.pid_Ki, Config::active.pid_Kd);
 }
 
-void Hotplate::compute(float temp)
+bool Hotplate::pwmWindowReached()
 {
-    short nextTemp;
-    _input = temp;
+    return (millis() - _pwmWindowStart_ms > Config::active.pid_pwm_window_ms);
+}
+
+void serialPrintLine()
+{
+    Serial.println("-------------------");
+}
+
+void Hotplate::loop()
+{
+    uint32_t now = millis();
+    if (now < _nextInterval_ms)
+    {
+        return;
+    }
+    _nextInterval_ms = now + PID_SAMPLE_MS;
+
+    _input = thermocouple.getTemperatureAverage();
 
     switch (_state)
     {
-    case State::Off:
+    case State::StandBy: // Wait for "Press start"
         setPower(false);
         return;
-        ;
-    case State::On:
-        if (Config::active.profile != Hotplate::Profile::Manual)
-        {
-            nextTemp = getProfileTemp();
-            if (nextTemp > 0) // Allow manual correction per interval, and do not stop at end
-            {
-                setSetpoint(nextTemp);
-            }
-        }
+    case State::PID:
+    case State::BangOn:
+    case State::BangOff:
         _myPID.run();
+        // Informative state changes. Logic copied from AutoPID.cpp
+        if (Config::active.pid_bangOn_temp_c && ((_setpoint - _input) > Config::active.pid_bangOn_temp_c))
+            _state = State::BangOn;
+        else if (Config::active.pid_bangOff_temp_c && ((_input - _setpoint) > Config::active.pid_bangOff_temp_c))
+            _state = State::BangOff;
+        else
+            _state = State::PID;
+        break;
+    case State::Start: // Start/Init PID Tuner
+        Serial.println("Copy & Paste to https://pidtuner.com");
+        Serial.println("Time, Input, Output");
+        serialPrintLine();
+        _pwmWindowStart_ms = now;
+        _state = State::Wait;
+        break;
+    case State::Wait: // Wait one pwmWindow before start. PID Tuner calculations may fail if not started with 0 output
+        if (!pwmWindowReached())
+        {
+            break;
+        }
+        _pidTunerTempTarget = _input + PID_TUNER_TEMP_STEPS_C;
+        _setpoint = _pidTunerTempTarget;
+        _state = State::Heat;
+        _output = Config::active.pid_pwm_window_ms;
+        break;
+    case State::Heat:
+        if (_input > _setpoint) // By the use of _input the user may adapt the target during heatup
+        {
+            _setpoint = 0;
+            _output = 0;
+            _pwmWindowStart_ms = now;
+            _pidTunerTempMax = _input;
+            _state = State::Settle;
+        }
+        break;
+    case State::Settle:
+        if (_input > _pidTunerTempMax) // overshooting
+        {
+            _pidTunerTempMax = _input;
+            break;
+        }
+        if (_input <= (_pidTunerTempMax - PID_TUNER_TEMP_SETTLED_C)) // Settled
+        {
+            if (_input + PID_TUNER_TEMP_STEPS_C < Config::active.max_temp_c)
+            {
+                // One more step
+                _state = State::Wait;
+                break;
+            }
+            _state = State::StandBy;
+            _mode = Mode::Manual;
+            serialPrintLine();
+            Serial.print("Done. Last step overshot (BangON) = ");
+            Serial.println(_pidTunerTempMax - _pidTunerTempTarget);
+        }
         break;
     }
 
-    // Informative state changes. Logic copied from AutoPID.cpp
-    if (Config::active.pid_bangOn_temp_c && ((_setpoint - _input) > Config::active.pid_bangOn_temp_c))
-        _controllerState = ControllerState::bangOn;
-    else if (Config::active.pid_bangOff_temp_c && ((_input - _setpoint) > Config::active.pid_bangOff_temp_c))
-        _controllerState = ControllerState::bangOff;
-    else
-        _controllerState = ControllerState::pid;
-
     // Soft PWM
-    uint32_t now = millis();
-    if (now - _pwmWindowStart_ms > Config::active.pid_pwm_window_ms)
+    if (pwmWindowReached())
     { // time to shift the Relay Window
         _pwmWindowStart_ms += Config::active.pid_pwm_window_ms;
     }
@@ -222,22 +171,21 @@ void Hotplate::compute(float temp)
     Serial.print(", Input: ");
     Serial.print(_input);
     Serial.print(", Controller state: ");
-    Serial.print(_controllerState);
+    Serial.print(_state);
     Serial.print(", Output: ");
     Serial.print(_output);
     Serial.print(", SSR: ");
     Serial.println(_power);
 #endif
 
-#ifdef DEBUG_SERIAL_PIDTUNER
-    if (_state == State::On && now >= _pidTunerNext_ms)
+    if (isMode(Mode::PIDTuner) && !isState(State::StandBy) &&
+        now >= _pidTunerOutputNext_ms)
     {
-        _pidTunerNext_ms = now + Config::active.pid_tuner_interval_ms;
-        Serial.print(now);
+        _pidTunerOutputNext_ms = now + PID_TUNER_INTERVAL_MS;
+        Serial.print((float)now / 1000);
         Serial.print(", ");
-        Serial.print(_power);
+        Serial.print(_output);
         Serial.print(", ");
         Serial.println(_input);
     }
-#endif
 }
