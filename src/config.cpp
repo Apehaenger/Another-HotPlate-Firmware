@@ -28,34 +28,30 @@ namespace Config
         {
                 EEPConfig eConf;
                 EEPROM.get(0, eConf);
-                eConf.conf.version = CONFIG_VERSION;
 
-                uint32_t configChecksum = CRC32::calculate((uint8_t *)&eConf.conf, sizeof(eConf.conf));
+                uint32_t configChecksum = CRC32::calculate(&eConf.conf, 1);
 
 #ifdef DEBUG_SERIAL
                 Serial.print("EEPROM CRC: ");
                 Serial.print(eConf.crc, HEX);
                 Serial.print(", Conf CRC: ");
-                Serial.println(configChecksum, HEX);
+                Serial.print(configChecksum, HEX);
+                uint32_t defaultChecksum = CRC32::calculate(&active, 1);
+                Serial.print(", default Conf CRC: ");
+                Serial.println(defaultChecksum, HEX);
 #endif
 
-                if (eConf.crc == configChecksum)
+                if (eConf.crc == configChecksum && eConf.conf.version == active.version)
                 {
                         active = eConf.conf;
                 }
-
-#ifdef DEBUG_SERIAL
-                configChecksum = CRC32::calculate((uint8_t *)&active, sizeof(active));
-                Serial.print("Default Conf CRC: ");
-                Serial.println(configChecksum, HEX);
-#endif
         }
 
         void save()
         {
                 EEPConfig eConf;
 
-                eConf.crc = CRC32::calculate((uint8_t *)&active, sizeof(active));
+                eConf.crc = CRC32::calculate(&active, 1);
                 eConf.conf = active;
 
 #ifdef DEBUG_SERIAL
