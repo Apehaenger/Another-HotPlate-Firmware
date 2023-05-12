@@ -33,7 +33,13 @@ private:
         float tcTempAvg;
     } MainScreenCrcData;
 
-    U8G2_SSD1306_128X64_NONAME_1_HW_I2C u8g2;
+    //U8G2_SSD1306_128X64_NONAME_1_HW_I2C u8g2;
+    // Please try one after these
+    U8G2_SH1106_128X64_NONAME_1_HW_I2C u8g2;
+    //U8G2_SH1106_128X64_NONAME_2_HW_I2C u8g2;
+    //U8G2_SH1106_128X64_NONAME_1_SW_I2C u8g2;
+    //U8G2_SH1106_128X64_NONAME_2_SW_I2C u8g2;
+
     Mode _mode = Mode::Main;
 
     uint32_t _nextInterval_ms = 0;
