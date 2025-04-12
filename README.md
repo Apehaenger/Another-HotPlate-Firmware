@@ -35,10 +35,10 @@ Built-in "Setup" within Hot-Plate user interface
 ![Reflow Profile Start](assets/images/ReflowProfile-Start.jpg)
 ![Running Reflow Profile](assets/images/ReflowProfile-1.jpg)
 
-### [PID Tuner](https://pidtuner.com) support
+### [PID Tuner](https://pidtuner.github.io/#/) support
 
 Simply start an automatic [step response](https://en.wikipedia.org/wiki/Step_response) run, with a connected serial console.
-Afterwards copy the resulting data into [PID Tuner](https://pidtuner.com) and (auto-)tune your PID constants.
+Afterwards copy the resulting data into [PID Tuner](https://pidtuner.github.io/#/) and (auto-)tune your PID constants.
 BTW: This step response can also be used to determine the overshot of the tuned target temperatures which might be used (at least as indication) for the [BangON](#bangonbangoff) setting. 
 
 ![Setup BangON](assets/images/PIDTuner-Start.jpg)
@@ -88,7 +88,7 @@ Assembled DIY Hot Plate like described in "[Tim's Hot Plate](https://www.instruc
 
 ## Roadmap
 
-- [X] Step response output for easier PID constant determination by the help of [PID Tuner](https://pidtuner.com)
+- [X] Step response output for easier PID constant determination by the help of [PID Tuner](https://pidtuner.github.io/#/)
 - [ ] Some kind of PID loop tuning/calibration
 - [X] Ramp-up determination to identify ~~PTC time and TC delay~~ (BangON calibration)
 - [ ] Progressive rotary switching for quicker +/- move
@@ -125,7 +125,7 @@ The code structure is [PlatformIO/VSCode](https://platformio.org/) based (no Ard
 * [MAX6675](https://github.com/adafruit/MAX6675-library) - Arduino library for interfacing with MAX6675 thermocouple amplifier
 * [CRC32](https://github.com/bakercp/CRC32) - An Arduino library for calculating a CRC32 checksum
 * [AutoPID](https://github.com/r-downing/AutoPID) - Fairly good documented (as well as feature rich and small) Arduino AutoPID library 
-* [PID Tuner](https://pidtuner.com) - Will help you to finde reasonable PID constants
+* [PID Tuner](https://pidtuner.github.io/#/) - Will help you to finde reasonable PID constants
 
 ## Contributing
 
